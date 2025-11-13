@@ -26,6 +26,8 @@
       <div style="margin-top:6px">Click to lock pointer, WASD to move, Mouse to look</div>
       <div style="margin-top:6px">Press <code>T</code> to shoot a random object</div>
       <div style="margin-top:6px"><button id="reset">Reset Scene</button></div>
+      <div style="margin-top:6px">Enemy HP: <span id="enemy-hp">100</span></div>
+      <div style="margin-top:6px">Player HP: <span id="player-hp">100</span></div>
     </div>
     <div id="instructions">Objects: <span id="obj-count">0</span> — Click screen to play</div>
 
@@ -96,21 +98,49 @@
         world.addBody(b);
       }
 
+      // Enemy (a pickle)
+      let enemy = null;
+      (function createEnemy(){
+        const bodyRadius = 0.9;
+        const enemyGroup = new THREE.Group();
+        const bodyMat = new THREE.MeshStandardMaterial({color:0x6fbf3f, roughness:0.7});
+        const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,1.8,16), bodyMat);
+        cyl.position.y = 1.0;
+        enemyGroup.add(cyl);
+        // bumps
+        const bumpMat = new THREE.MeshStandardMaterial({color:0x57a934});
+        for(let i=0;i<6;i++){ const s = new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8), bumpMat); const ang = (i/6)*Math.PI*2; s.position.set(Math.cos(ang)*0.55, 1.1 + (Math.random()-0.5)*0.2, Math.sin(ang)*0.25); enemyGroup.add(s); }
+        enemyGroup.position.set(0,0, -8);
+        scene.add(enemyGroup);
+
+        const enemyBody = new CANNON.Body({mass:3, shape:new CANNON.Sphere(bodyRadius)});
+        enemyBody.position.set(enemyGroup.position.x, 1.0, enemyGroup.position.z);
+        enemyBody.linearDamping = 0.6;
+        world.addBody(enemyBody);
+
+        enemy = {mesh:enemyGroup, body:enemyBody, health:100, alive:true, speed:2.2, attackInterval:1.2, lastAttack:0, damage:10};
+        document.getElementById('enemy-hp').textContent = enemy.health;
+      })();
+
       // Player controls (pointer lock)
       const controls = new PointerLockControls(camera, renderer.domElement);
       document.body.addEventListener('click', ()=> controls.lock() );
-      controls.addEventListener('lock', ()=>{document.getElementById('instructions').style.display='block'});
-      controls.addEventListener('unlock', ()=>{document.getElementById('instructions').style.display='block'});
+      controls.addEventListener('lock', ()=>{document.getElementById('instructions').style.display='block'; try{ audioCtx.resume(); }catch(e){} });
+      controls.addEventListener('unlock', ()=>{document.getElementById('instructions').style.display='block'; });
 
       const velocity = new THREE.Vector3();
       const direction = new THREE.Vector3();
       const moveState = {forward:false,back:false,left:false,right:false};
+      // simple player vertical state for jump + health
+      const player = {vy:0, onGround:true, jumpSpeed:8, gravity:24, health:100};
+      document.getElementById('player-hp').textContent = player.health;
 
       window.addEventListener('keydown', (e)=>{
         if(e.code === 'KeyW') moveState.forward = true;
         if(e.code === 'KeyS') moveState.back = true;
         if(e.code === 'KeyA') moveState.left = true;
         if(e.code === 'KeyD') moveState.right = true;
+        if(e.code === 'Space') { if(player.onGround){ player.vy = player.jumpSpeed; player.onGround = false; playSound('jump'); } }
         if(e.code === 'KeyT') shootRandom();
       });
       window.addEventListener('keyup', (e)=>{
@@ -123,6 +153,18 @@
       // keep track of dynamic objects
       const objects = [];
       const maxObjects = 120;
+
+      // audio
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      function playSound(name){
+        try{ if(audioCtx.state === 'suspended') audioCtx.resume(); }catch(e){}
+        if(name === 'shoot') return playBeep(900,0.08,'sine');
+        if(name === 'hit') return playBeep(420,0.12,'sawtooth');
+        if(name === 'jump') return playBeep(700,0.12,'sine');
+        if(name === 'death') return playDeath();
+      }
+      function playBeep(freq,duration,type='sine'){ const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = type; o.frequency.value = freq; o.connect(g); g.connect(audioCtx.destination); g.gain.setValueAtTime(0.0001,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.18,audioCtx.currentTime+0.01); o.start(); g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+duration); o.stop(audioCtx.currentTime+duration+0.02); }
+      function playDeath(){ const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime(400,audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); g.gain.setValueAtTime(0.0001,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.22,audioCtx.currentTime+0.01); o.frequency.exponentialRampToValueAtTime(90,audioCtx.currentTime+0.6); o.start(); g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.8); o.stop(audioCtx.currentTime+0.82); }
 
       function shootRandom(){
         // choose random type
@@ -164,8 +206,9 @@
         body.quaternion.setFromEuler(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
         world.addBody(body);
 
-        objects.push({mesh, body});
+        objects.push({mesh, body, isProjectile:true, size:size, damage:5});
         document.getElementById('obj-count').textContent = objects.length;
+        playSound('shoot');
 
         // limit objects
         if(objects.length > maxObjects){
@@ -179,6 +222,8 @@
       document.getElementById('reset').addEventListener('click', ()=>{
         while(objects.length) { const o = objects.pop(); scene.remove(o.mesh); world.removeBody(o.body); }
         document.getElementById('obj-count').textContent = '0';
+        // reset enemy
+        if(enemy){ enemy.health = 100; enemy.alive = true; try{ scene.add(enemy.mesh); world.addBody(enemy.body); }catch(e){} document.getElementById('enemy-hp').textContent = enemy.health; }
       });
 
       // sync visuals with physics
@@ -186,6 +231,12 @@
         for(const o of objects){
           o.mesh.position.copy(o.body.position);
           o.mesh.quaternion.copy(o.body.quaternion);
+        }
+        // sync enemy mesh to physics body
+        if(enemy && enemy.alive){
+          enemy.mesh.position.copy(enemy.body.position);
+          // keep mesh vertical position offset (body at center)
+          enemy.mesh.position.y = enemy.body.position.y - 0.0;
         }
       }
 
@@ -209,17 +260,23 @@
           camera.getWorldDirection(move);
           move.y = 0;
           move.normalize();
-          const right = new THREE.Vector3().crossVectors(camera.up, move).normalize();
+          // ensure right points to camera right
+          const right = new THREE.Vector3().crossVectors(move, camera.up).normalize();
           const forwardMove = move.multiplyScalar(-direction.z);
           const rightMove = right.multiplyScalar(direction.x);
           camera.position.add(forwardMove.add(rightMove).multiplyScalar(speed*dt));
         }
 
+        // vertical (jump/gravity)
+        player.vy -= player.gravity * dt;
+        camera.position.y += player.vy * dt;
+        if(camera.position.y <= 1.6){ camera.position.y = 1.6; player.vy = 0; player.onGround = true; }
+
         // step physics
         world.step(1/60, dt, 3);
         sync();
 
-        // cleanup fallen objects
+          // cleanup fallen objects
         for(let i = objects.length-1; i >= 0; i--){
           if(objects[i].mesh.position.y < -50){
             world.removeBody(objects[i].body);
@@ -229,8 +286,71 @@
           }
         }
 
-        renderer.render(scene, camera);
-        requestAnimationFrame(animate);
+          // enemy collision checks with projectiles
+          if(enemy && enemy.alive){
+            for(let i = objects.length-1; i >= 0; i--){
+              const o = objects[i];
+              if(!o.isProjectile) continue;
+              const dx = o.body.position.x - enemy.body.position.x;
+              const dy = o.body.position.y - enemy.body.position.y;
+              const dz = o.body.position.z - enemy.body.position.z;
+              const dist2 = dx*dx + dy*dy + dz*dz;
+              const thresh = (o.size || 0.5) + 0.9;
+              if(dist2 <= thresh*thresh){
+                // hit
+                enemy.health -= o.damage || 5;
+                playSound('hit');
+                // remove projectile
+                scene.remove(o.mesh);
+                try{ world.removeBody(o.body); }catch(e){}
+                objects.splice(i,1);
+                document.getElementById('obj-count').textContent = objects.length;
+                document.getElementById('enemy-hp').textContent = Math.max(0, enemy.health);
+                if(enemy.health <= 0){ enemy.alive = false; playSound('death'); try{ world.removeBody(enemy.body); }catch(e){} try{ scene.remove(enemy.mesh); }catch(e){} document.getElementById('enemy-hp').textContent = 0; }
+              }
+            }
+
+            // enemy AI: follow the player and attack when close
+            try{
+              const ex = enemy.body.position.x;
+              const ez = enemy.body.position.z;
+              const px = camera.position.x;
+              const pz = camera.position.z;
+              const vx = px - ex;
+              const vz = pz - ez;
+              const dist = Math.hypot(vx, vz);
+              const nowT = performance.now() / 1000;
+              const attackRange = 1.6;
+              if(dist > attackRange){
+                // move toward player on XZ plane
+                const nx = vx / dist;
+                const nz = vz / dist;
+                const speed = enemy.speed || 2.2;
+                // set velocity (preserve Y)
+                enemy.body.velocity.x = nx * speed;
+                enemy.body.velocity.z = nz * speed;
+              } else {
+                // stop horizontal movement
+                enemy.body.velocity.x = 0;
+                enemy.body.velocity.z = 0;
+                // attack if cooldown passed
+                if(nowT - (enemy.lastAttack || 0) >= (enemy.attackInterval || 1.2)){
+                  enemy.lastAttack = nowT;
+                  // damage player
+                  player.health = Math.max(0, player.health - (enemy.damage || 10));
+                  document.getElementById('player-hp').textContent = player.health;
+                  playSound('hit');
+                  // small knockback on player (move camera back a bit)
+                  const knock = 0.6;
+                  camera.position.x -= (nx || 0) * knock;
+                  camera.position.z -= (nz || 0) * knock;
+                }
+              }
+            }catch(e){ console.warn('enemy AI error', e); }
+          }
+
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate);
       }
 
           // handle resize
