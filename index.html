@@ -114,17 +114,69 @@
     const backBtn = document.getElementById('back-btn');
     const instr = document.getElementById('instr');
 
+    // Menu music (ambient WebAudio) - lazy init
+    let _audioCtx = null, _menuGain = null, _menuOscs = [];
+    function initMenuMusic(){
+      if(_audioCtx) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if(!AudioCtx) return;
+      _audioCtx = new AudioCtx();
+      _menuGain = _audioCtx.createGain();
+      _menuGain.gain.value = 0.0;
+      _menuGain.connect(_audioCtx.destination);
+      // create a few detuned oscillators for a simple pad
+      const freqs = [220, 330, 440];
+      for(let i=0;i<3;i++){
+        const o = _audioCtx.createOscillator();
+        const g = _audioCtx.createGain();
+        o.type = ['sine','sine','sawtooth'][i%3];
+        o.frequency.value = freqs[i] * (1 + (Math.random()-0.5)*0.02);
+        o.detune.value = (Math.random()-0.5)*20;
+        g.gain.value = 0.0;
+        // slow LFO to modulate gain
+        const lfo = _audioCtx.createOscillator();
+        lfo.frequency.value = 0.05 + Math.random()*0.06;
+        const lfoGain = _audioCtx.createGain();
+        lfoGain.gain.value = 0.12 + Math.random()*0.08;
+        lfo.connect(lfoGain);
+        lfoGain.connect(g.gain);
+        o.connect(g);
+        g.connect(_menuGain);
+        o.start(); lfo.start();
+        _menuOscs.push({osc:o,gain:g,lfo:lfo});
+      }
+      // small master fade-in when started
+    }
+    function startMenuMusic(){
+      initMenuMusic();
+      if(!_audioCtx || !_menuGain) return;
+      try{ if(_audioCtx.state === 'suspended') _audioCtx.resume(); }catch(e){}
+      const now = _audioCtx.currentTime;
+      _menuGain.gain.cancelScheduledValues(now);
+      _menuGain.gain.setValueAtTime(_menuGain.gain.value, now);
+      _menuGain.gain.linearRampToValueAtTime(0.06, now + 1.2);
+    }
+    function stopMenuMusic(){
+      if(!_audioCtx || !_menuGain) return;
+      const now = _audioCtx.currentTime;
+      _menuGain.gain.cancelScheduledValues(now);
+      _menuGain.gain.setValueAtTime(_menuGain.gain.value, now);
+      _menuGain.gain.linearRampToValueAtTime(0.0, now + 1.2);
+    }
+
     function showMenu(menuEl) {
-        mainMenu.classList.add('hidden');
-        platformerMenu.classList.add('hidden');
-        snakeMenu.classList.add('hidden');
-        fpsMenu.classList.add('hidden');
-        if (menuEl) menuEl.classList.remove('hidden');
-        gameRunning = false;
-        backBtn.style.display = 'none';
-        instr.style.display = 'none';
-        canvas.style.display = 'none';
-        document.getElementById('hud').style.display = 'none';
+      mainMenu.classList.add('hidden');
+      platformerMenu.classList.add('hidden');
+      snakeMenu.classList.add('hidden');
+      fpsMenu.classList.add('hidden');
+      if (menuEl) menuEl.classList.remove('hidden');
+      gameRunning = false;
+      backBtn.style.display = 'none';
+      instr.style.display = 'none';
+      canvas.style.display = 'none';
+      document.getElementById('hud').style.display = 'none';
+      // play/stop menu music depending on which menu
+      if(menuEl === mainMenu){ startMenuMusic(); } else { stopMenuMusic(); }
     }
 
     function showGame() {
