@@ -41,6 +41,7 @@
           <div class="hub-buttons">
             <button class="game-btn" id="play-platformer">Play Platformer</button>
             <button class="game-btn" id="play-snake">Play Snake</button>
+            <button class="game-btn" id="play-fps">Play FPS</button>
             <button class="game-btn" id="tab-cloak-btn">Cloak Tab</button>
           </div>
         </div>
@@ -91,6 +92,17 @@
       </div>
     </div>
 
+    <div id="fps-menu" class="menu hidden">
+      <div class="menu-panel">
+        <h1>FPS Physics Demo</h1>
+        <div class="row">
+          <button id="fps-start-btn">Start Game</button>
+          <button id="fps-back">Back</button>
+        </div>
+        <p class="small">Click to lock pointer, WASD to move, Mouse to look, T to shoot objects.</p>
+      </div>
+    </div>
+
     <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -98,6 +110,7 @@
     const mainMenu = document.getElementById('main-menu');
     const platformerMenu = document.getElementById('platformer-menu');
     const snakeMenu = document.getElementById('snake-menu');
+    const fpsMenu = document.getElementById('fps-menu');
     const backBtn = document.getElementById('back-btn');
     const instr = document.getElementById('instr');
 
@@ -105,6 +118,7 @@
         mainMenu.classList.add('hidden');
         platformerMenu.classList.add('hidden');
         snakeMenu.classList.add('hidden');
+        fpsMenu.classList.add('hidden');
         if (menuEl) menuEl.classList.remove('hidden');
         gameRunning = false;
         backBtn.style.display = 'none';
@@ -161,6 +175,9 @@
 
     document.getElementById('play-platformer').addEventListener('click', () => { currentLevel = 0; document.getElementById('name-input').value = playerName; document.getElementById('level-select').value = '0'; showMenu(platformerMenu); });
     document.getElementById('play-snake').addEventListener('click', () => { document.getElementById('snake-difficulty').value = 'normal'; showMenu(snakeMenu); });
+    document.getElementById('play-fps').addEventListener('click', () => { showMenu(fpsMenu); });
+    document.getElementById('fps-start-btn').addEventListener('click', () => { window.location.href = '/fps.html'; });
+    document.getElementById('fps-back').addEventListener('click', () => { showMenu(mainMenu); });
     document.getElementById('tab-cloak-btn').addEventListener('click', () => { cloakTab(); alert('Tab cloaked! Title changed to about:blank'); });
     document.getElementById('name-save').addEventListener('click', () => { const s = sanitizeName(document.getElementById('name-input').value); playerName = s || 'Player'; localStorage.setItem('playerName', playerName); updateHUD(); });
     document.getElementById('code-apply').addEventListener('click', () => { const code = (document.getElementById('code-input').value || '').trim(); if (code === 'RAINBOW') { nameRainbow = true; localStorage.setItem('nameRainbow','true'); updateHUD(); alert('Rainbow name unlocked!'); } else { alert('Incorrect code.'); } });
