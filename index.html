@@ -176,7 +176,7 @@
     document.getElementById('play-platformer').addEventListener('click', () => { currentLevel = 0; document.getElementById('name-input').value = playerName; document.getElementById('level-select').value = '0'; showMenu(platformerMenu); });
     document.getElementById('play-snake').addEventListener('click', () => { document.getElementById('snake-difficulty').value = 'normal'; showMenu(snakeMenu); });
     document.getElementById('play-fps').addEventListener('click', () => { showMenu(fpsMenu); });
-    document.getElementById('fps-start-btn').addEventListener('click', () => { window.location.href = '/fps.html'; });
+    document.getElementById('fps-start-btn').addEventListener('click', () => { window.location.href = 'fps.html'; });
     document.getElementById('fps-back').addEventListener('click', () => { showMenu(mainMenu); });
     document.getElementById('tab-cloak-btn').addEventListener('click', () => { cloakTab(); alert('Tab cloaked! Title changed to about:blank'); });
     document.getElementById('name-save').addEventListener('click', () => { const s = sanitizeName(document.getElementById('name-input').value); playerName = s || 'Player'; localStorage.setItem('playerName', playerName); updateHUD(); });
