@@ -11,6 +11,14 @@
       canvas{display:block}
       button{background:#2b6f86;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
     </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+          "cannon-es": "https://cdn.skypack.dev/cannon-es"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="overlay">
@@ -22,11 +30,19 @@
     <div id="instructions">Objects: <span id="obj-count">0</span> — Click screen to play</div>
 
     <script type="module">
-      import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
-      import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/PointerLockControls.js';
-      import * as CANNON from 'https://cdn.skypack.dev/cannon-es';
+      (async ()=>{
+        const overlay = document.getElementById('overlay');
+        function showError(msg){
+          overlay.innerHTML = '<div style="color:#ffb3b3"><strong>Error:</strong><br>' + String(msg).replace(/</g,'&lt;') + '</div>';
+          console.error(msg);
+        }
 
-      const scene = new THREE.Scene();
+        try{
+          const THREE = await import('three');
+          const { PointerLockControls } = await import('https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/PointerLockControls.js');
+          const CANNON = await import('cannon-es');
+
+          const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x081226);
 
       const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
@@ -217,12 +233,16 @@
         requestAnimationFrame(animate);
       }
 
-      // handle resize
-      window.addEventListener('resize', ()=>{
-        camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
-      });
+          // handle resize
+          window.addEventListener('resize', ()=>{
+            camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
+          });
 
-      animate();
+          animate();
+        }catch(err){
+          showError(err && err.stack ? err.stack : err);
+        }
+      })();
     </script>
   </body>
 </html>
