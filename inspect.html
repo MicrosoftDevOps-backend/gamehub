@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Inspector — Game Hub</title>
+    <style>
+        :root {
+            --bg: #071029;
+            --panel: #0f1724;
+            --accent: #6fbf3f;
+            --muted: #999;
+            --card-border: #2b6f86;
+            --text: #dfe7ff;
+            --danger: #ff6b6b;
+            --glass: rgba(3,7,18,0.6);
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: system-ui, Segoe UI, Roboto, Arial;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--card-border);
+            background: linear-gradient(180deg,#071029,#081126);
+        }
+
+            header h1 {
+                margin: 0;
+                font-size: 16px;
+                color: var(--accent);
+            }
+
+        .status {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .container {
+            display: flex;
+            height: calc(100% - 56px);
+            gap: 12px;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            overflow: auto;
+            padding: 10px;
+        }
+
+        .left {
+            width: 42%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        button, input[type="button"], input[type="checkbox"] {
+            cursor: pointer;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+
+        .btn {
+            background: #2b6f86;
+            color: #fff;
+            padding: 8px 10px;
+            border: none;
+        }
+
+            .btn.warn {
+                background: var(--danger);
+                color: #fff;
+            }
+
+            .btn.ghost {
+                background: transparent;
+                border: 1px solid rgba(255,255,255,0.04);
+                color: var(--text);
+            }
+
+        .tree {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+            .tree ul {
+                list-style: none;
+                margin: 0;
+                padding-left: 12px;
+            }
+
+            .tree li {
+                padding: 6px 8px;
+                border-radius: 6px;
+                cursor: pointer;
+            }
+
+                .tree li:hover {
+                    background: rgba(111,191,63,0.05);
+                }
+
+                .tree li.selected {
+                    background: rgba(111,191,63,0.12);
+                    color: var(--accent);
+                    font-weight: 700;
+                }
+
+            .tree .meta {
+                color: var(--muted);
+                margin-left: 6px;
+                font-size: 12px;
+            }
+
+        .details h3 {
+            margin: 0 0 8px 0;
+            color: var(--accent);
+        }
+
+        .attrs, .inline-style, .computed {
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 13px;
+            max-height: 220px;
+            overflow: auto;
+        }
+
+        .attr-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+            .attr-row input[type="text"] {
+                background: transparent;
+                border: 1px solid rgba(255,255,255,0.04);
+                color: var(--text);
+                padding: 6px;
+                border-radius: 6px;
+            }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.04);
+            color: var(--text);
+            padding: 8px;
+            border-radius: 6px;
+            resize: vertical;
+        }
+
+        .small-muted {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        footer {
+            padding: 8px 12px;
+            border-top: 1px solid var(--card-border);
+            text-align: right;
+            color: var(--muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div style="display:flex;gap:12px;align-items:center;">
+            <h1>Inspector — Game Hub</h1>
+            <div class="status" id="conn-status">Not connected</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <label class="small-muted" id="auto-open-label"><input type="checkbox" id="auto-open" /> Auto-open on host</label>
+            <button id="refresh-dom" class="btn">Refresh DOM</button>
+            <button id="close-btn" class="btn ghost">Close</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="left panel">
+            <div class="toolbar">
+                <button id="pick-btn" class="btn">Pick element</button>
+                <div class="small-muted" id="pick-status">Pick off</div>
+            </div>
+            <div id="dom-tree" class="tree" aria-live="polite"></div>
+        </div>
+
+        <div class="right panel details">
+            <h3>Selected Element</h3>
+            <div id="elem-summary" class="small-muted">No element selected</div>
+
+            <h4 style="margin-top:10px;color:var(--accent)">Attributes</h4>
+            <div id="attr-list" class="attrs small-muted">—</div>
+
+            <h4 style="margin-top:10px;color:var(--accent)">Inline styles (cssText)</h4>
+            <div class="inline-style">
+                <textarea id="inline-style-text" rows="6" placeholder="element.style.cssText"></textarea>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button id="apply-inline" class="btn">Apply</button>
+                    <button id="clear-inline" class="btn ghost">Clear</button>
+                </div>
+            </div>
+
+            <h4 style="margin-top:10px;color:var(--accent)">Computed styles (subset)</h4>
+            <pre id="computed-styles" class="computed small-muted">—</pre>
+
+            <h4 style="margin-top:10px;color:var(--accent)">Box (pixels)</h4>
+            <div id="box-model" class="small-muted">—</div>
+
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <button id="delete-node" class="btn warn">Remove Element</button>
+                <button id="copy-selector" class="btn ghost">Copy Path</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>Inspector (client-side only) — no data leaves this browser.</footer>
+
+    <script>// Inspector client (runs in separate window). Communicates with opener via postMessage.
+    // Handshake sequence:
+    // 1. inspector -> opener: {type: 'inspect-ready'}
+    // 2. opener -> inspector: {type: 'inspect-init', token}
+    // 3. inspector -> opener: {type: 'requestDOM', token}
+    // Subsequent messages include token.
+
+    let token = null;
+    let connected = false;
+    let selectedPath = null;
+
+    function setStatus(s) {
+      document.getElementById('conn-status').textContent = s;
+    }
+
+    function safeSend(msg) {
+      if (!token || !window.opener) return;
+      msg.token = token;
+      try { window.opener.postMessage(msg, '*'); } catch(e){ console.warn('send failed',e); }
+    }
+
+    function requestDOM() {
+      safeSend({type: 'requestDOM'});
+    }
+
+    // UI helpers
+    function el(id){ return document.getElementById(id); }
+
+    // handle incoming messages from opener
+    window.addEventListener('message', (ev) => {
+      if (ev.source !== window.opener) return;
+      const msg = ev.data;
+      if (!msg || typeof msg.type !== 'string') return;
+
+      if (msg.type === 'inspect-init') {
+        // opener sent us the secret token
+        token = msg.token;
+        connected = true;
+        setStatus('Connected');
+        requestDOM();
+        // ask opener if auto-open is set
+        safeSend({type:'queryAutoOpen'});
+        return;
+      }
+
+      // All other messages must include token
+      if (!token || msg.token !== token) return;
+
+      switch (msg.type) {
+        case 'domSnapshot':
+          renderDOM(msg.dom);
+          break;
+        case 'computedStyleResult':
+          showComputed(msg.styles, msg.rect);
+          break;
+        case 'elementInfo':
+          showElementInfo(msg.info, msg.path);
+          break;
+        case 'hover': // hover events from pick mode
+          highlightTreeNode(msg.path);
+          break;
+        case 'picked': // element selected by click in host
+          selectPath(msg.path);
+          break;
+        case 'autoOpenStatus':
+          el('auto-open').checked = !!msg.enabled;
+          break;
+        default:
+          console.log('inspector got', msg);
+      }
+    });
+
+    // initial ready handshake
+    window.addEventListener('load', () => {
+      if (!window.opener) {
+        document.body.innerHTML = '<div style="padding:20px;font-family:system-ui;">This inspector should be opened from the Game Hub (click "Inspect").</div>';
+        return;
+      }
+      setStatus('Waiting for host...');
+      try { window.opener.postMessage({type:'inspect-ready'}, '*'); } catch (e) { console.warn('handshake send failed', e); }
+    });
+
+    // Render DOM tree (snapshot)
+    function renderDOM(node) {
+      const tree = el('dom-tree');
+      tree.innerHTML = '';
+      function makeNode(n) {
+        const li = document.createElement('div');
+        li.className = 'tree-node';
+        li.style.paddingLeft = (n.depth * 10) + 'px';
+        li.dataset.path = JSON.stringify(n.path);
+        li.innerHTML = `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
+          <div><strong style="color:var(--accent);text-transform:uppercase">${n.tag}</strong> ${n.id ? '<span class="meta">#'+escapeHtml(n.id)+'</span>':''} ${n.classList.length ? '<span class="meta">.'+escapeHtml(n.class.join('.'))+'</span>':''}</div>
+          <div class="meta">children: ${n.childCount}</div>
+        </div>`;
+        li.addEventListener('click', (ev) => { ev.stopPropagation(); selectPath(n.path); });
+        return li;
+      }
+      // flatten traversal to keep DOM small and responsive
+      const stack = [node];
+      while (stack.length) {
+        const n = stack.shift();
+        const nodeEl = makeNode(n);
+        // attach to tree
+        tree.appendChild(nodeEl);
+        if (n.children && n.children.length) {
+          // insert children right after parent for simple listing
+          for (let i=0;i<n.children.length;i++){
+            stack.splice(0,0,n.children[i]); // breadth-first-like
+          }
+        }
+      }
+    }
+
+    function selectPath(path) {
+      selectedPath = path;
+      // update UI selection highlight
+      document.querySelectorAll('#dom-tree .tree-node').forEach(x => x.classList.remove('selected'));
+      const target = Array.from(document.querySelectorAll('#dom-tree .tree-node')).find(x => x.dataset.path === JSON.stringify(path));
+      if (target) target.classList.add('selected');
+
+      el('elem-summary').innerHTML = 'Loading element...';
+      el('attr-list').innerHTML = 'Loading…';
+      el('computed-styles').textContent = 'Loading…';
+      el('inline-style-text').value = '';
+      // ask opener for details + computed style
+      safeSend({type: 'requestElementInfo', path});
+      safeSend({type: 'getComputedStyle', path});
+    }
+
+    function showElementInfo(info, path) {
+      if (!info) return;
+      el('elem-summary').innerHTML = `<strong>${info.tag.toUpperCase()}</strong> ${ info.id ? '<span class="meta">#'+escapeHtml(info.id)+'</span>' : '' } ${ info.classList && info.classList.length ? '<span class="meta">.'+escapeHtml(info.classList.join('.'))+'</span>' : '' }`;
+      // attributes
+      const attrs = el('attr-list');
+      attrs.innerHTML = '';
+      if (!info.attributes || !info.attributes.length) {
+        attrs.textContent = '—';
+      } else {
+        info.attributes.forEach(a => {
+          const row = document.createElement('div');
+          row.className = 'attr-row';
+          const name = document.createElement('input'); name.type = 'text'; name.value = a.name; name.disabled = true; name.style.width = '28%';
+          const value = document.createElement('input'); value.type = 'text'; value.value = a.value; value.style.width = '56%';
+          const setBtn = document.createElement('button'); setBtn.className='btn'; setBtn.textContent='Set';
+          const remBtn = document.createElement('button'); remBtn.className='btn ghost'; remBtn.textContent='Remove';
+          setBtn.addEventListener('click', () => {
+            safeSend({type: 'setAttribute', path, attr: name.value, value: value.value});
+            requestDOM();
+            safeSend({type:'getComputedStyle', path});
+          });
+          remBtn.addEventListener('click', () => {
+            if (!confirm('Remove attribute ' + name.value + '?')) return;
+            safeSend({type: 'removeAttribute', path, attr: name.value});
+            requestDOM();
+          });
+          row.appendChild(name); row.appendChild(value); row.appendChild(setBtn); row.appendChild(remBtn);
+          attrs.appendChild(row);
+        });
+      }
+
+      // inline styles
+      el('inline-style-text').value = info.inlineStyle || '';
+    }
+
+    function showComputed(styles, rect) {
+      const pre = el('computed-styles');
+      pre.textContent = Object.entries(styles || {}).map(([k,v]) => `${k}: ${v}`).join('\n');
+      el('box-model').textContent = rect ? `top:${Math.round(rect.top)} left:${Math.round(rect.left)} w:${Math.round(rect.width)} h:${Math.round(rect.height)}` : '—';
+    }
+
+    function highlightTreeNode(path) {
+      // highlight hovered node in our list, do not change selection
+      document.querySelectorAll('#dom-tree .tree-node').forEach(x => x.style.opacity = '1');
+      const t = Array.from(document.querySelectorAll('#dom-tree .tree-node')).find(x => x.dataset.path === JSON.stringify(path));
+      if (t) { t.style.opacity = '0.6'; t.scrollIntoView({block:'nearest', inline:'nearest'}); }
+    }
+
+    // UI events
+    el('refresh-dom').addEventListener('click', () => { requestDOM(); });
+    el('close-btn').addEventListener('click', () => { try { safeSend({type:'disablePicker'}); } catch(e){} window.close(); });
+    el('pick-btn').addEventListener('click', () => {
+      const on = el('pick-btn').dataset.on === '1';
+      if (!connected) return alert('Not connected to host.');
+      if (!on) {
+        safeSend({type:'enablePicker'}); el('pick-btn').textContent = 'Stop picking'; document.getElementById('pick-status').textContent = 'Pick on'; el('pick-btn').dataset.on = '1';
+      } else {
+        safeSend({type:'disablePicker'}); el('pick-btn').textContent = 'Pick element'; document.getElementById('pick-status').textContent = 'Pick off'; el('pick-btn').dataset.on = '0';
+      }
+    });
+
+    el('apply-inline').addEventListener('click', () => {
+      if (!selectedPath) return alert('Select an element first.');
+      const cssText = el('inline-style-text').value;
+      safeSend({type:'setInlineStyleText', path:selectedPath, cssText});
+      requestDOM();
+      safeSend({type:'getComputedStyle', path:selectedPath});
+    });
+    el('clear-inline').addEventListener('click', () => {
+      if (!selectedPath) return;
+      if (!confirm('Clear inline style?')) return;
+      safeSend({type:'setInlineStyleText', path:selectedPath, cssText: ''});
+      requestDOM();
+      safeSend({type:'getComputedStyle', path:selectedPath});
+    });
+
+    el('delete-node').addEventListener('click', () => {
+      if (!selectedPath) return alert('Select an element first.');
+      if (!confirm('Remove selected element from the page?')) return;
+      safeSend({type:'deleteNode', path:selectedPath});
+      requestDOM();
+    });
+
+    el('copy-selector').addEventListener('click', () => {
+      if (!selectedPath) return alert('Select an element first.');
+      navigator.clipboard?.writeText(JSON.stringify(selectedPath))?.then(()=>alert('Path copied to clipboard.'), ()=>alert('Copy failed.'));
+    });
+
+    el('auto-open').addEventListener('change', (e) => {
+      safeSend({type:'setAutoOpen', enabled: !!e.target.checked});
+    });
+
+    // small helper
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }</script>
+</body>
+</html>
