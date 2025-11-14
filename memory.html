@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Memory Match</title>
+  <style>
+    html, body { height: 100%; margin: 0; background: #0b1220; font-family: system-ui, Arial; color: #dfe7ff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    #container { padding: 20px; }
+    h1 { text-align: center; color: #6fbf3f; margin: 0 0 20px 0; }
+    #stats { text-align: center; font-size: 18px; margin-bottom: 20px; }
+    #stats span { background: #071029; padding: 8px 16px; border-radius: 6px; margin: 0 10px; border: 1px solid #2b6f86; }
+    #grid { display: grid; grid-template-columns: repeat(4, 120px); gap: 10px; margin-bottom: 20px; }
+    .card { width: 120px; height: 120px; background: #2b6f86; border: 2px solid #6fbf3f; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; transition: all 0.2s; }
+    .card:hover { background: #3a8fa5; transform: scale(1.05); }
+    .card.flipped { background: #6fbf3f; color: #000; }
+    .card.matched { background: #4a8a2f; color: #7fcf4f; }
+    #controls { text-align: center; }
+    button { padding: 12px 24px; background: #6fbf3f; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px; margin: 0 10px; }
+    button:hover { background: #7fcf4f; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>🎮 Memory Match</h1>
+    <div id="stats">
+      <span>Moves: <strong id="moves">0</strong></span>
+      <span>Matches: <strong id="matches">0</strong></span>
+      <span>Best: <strong id="best">—</strong></span>
+    </div>
+    <div id="grid"></div>
+    <div id="controls">
+      <button onclick="resetGame()">New Game</button>
+      <button onclick="location.href='index.html'">Back to Hub</button>
+    </div>
+  </div>
+
+  <script>
+    const emojis = ['🍎', '🍌', '🍊', '🍇', '🍓', '🍒', '🍑', '🍍'];
+    const cards = [...emojis, ...emojis];
+    let shuffledCards = [];
+    let flipped = [];
+    let matched = [];
+    let moves = 0;
+    let matches = 0;
+    let canFlip = true;
+
+    function shuffleArray(arr) {
+      const newArr = [...arr];
+      for (let i = newArr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+      }
+      return newArr;
+    }
+
+    function createGrid() {
+      shuffledCards = shuffleArray(cards);
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      shuffledCards.forEach((emoji, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.textContent = '?';
+        card.addEventListener('click', () => flipCard(index));
+        grid.appendChild(card);
+      });
+    }
+
+    function flipCard(index) {
+      if (!canFlip || flipped.includes(index) || matched.includes(index)) return;
+
+      flipped.push(index);
+      const card = document.querySelectorAll('.card')[index];
+      card.textContent = shuffledCards[index];
+      card.classList.add('flipped');
+
+      if (flipped.length === 2) {
+        canFlip = false;
+        moves++;
+        document.getElementById('moves').textContent = moves;
+
+        const [idx1, idx2] = flipped;
+        if (shuffledCards[idx1] === shuffledCards[idx2]) {
+          matched.push(idx1, idx2);
+          matches++;
+          document.getElementById('matches').textContent = matches;
+          document.querySelectorAll('.card')[idx1].classList.add('matched');
+          document.querySelectorAll('.card')[idx2].classList.add('matched');
+          flipped = [];
+          canFlip = true;
+
+          if (matches === emojis.length) {
+            setTimeout(() => {
+              const best = localStorage.getItem('memoryBest') || '—';
+              if (best === '—' || moves < parseInt(best)) {
+                localStorage.setItem('memoryBest', moves);
+                document.getElementById('best').textContent = moves;
+              }
+              alert(`🎉 You won in ${moves} moves!`);
+            }, 500);
+          }
+        } else {
+          setTimeout(() => {
+            document.querySelectorAll('.card')[idx1].textContent = '?';
+            document.querySelectorAll('.card')[idx2].textContent = '?';
+            document.querySelectorAll('.card')[idx1].classList.remove('flipped');
+            document.querySelectorAll('.card')[idx2].classList.remove('flipped');
+            flipped = [];
+            canFlip = true;
+          }, 800);
+        }
+      }
+    }
+
+    function resetGame() {
+      flipped = [];
+      matched = [];
+      moves = 0;
+      matches = 0;
+      canFlip = true;
+      document.getElementById('moves').textContent = moves;
+      document.getElementById('matches').textContent = matches;
+      const best = localStorage.getItem('memoryBest') || '—';
+      document.getElementById('best').textContent = best;
+      createGrid();
+    }
+
+    window.addEventListener('load', () => {
+      const best = localStorage.getItem('memoryBest') || '—';
+      document.getElementById('best').textContent = best;
+      resetGame();
+    });
+  </script>
+</body>
+</html>
