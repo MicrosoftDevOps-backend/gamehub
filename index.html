@@ -42,6 +42,7 @@
             <button class="game-btn" id="play-platformer">Play Platformer</button>
             <button class="game-btn" id="play-snake">Play Snake</button>
             <button class="game-btn" id="play-fps">Play FPS</button>
+            <button class="game-btn" id="play-music">Play Music Maker</button>
             <button class="game-btn" id="tab-cloak-btn">Cloak Tab</button>
           </div>
         </div>
@@ -228,6 +229,7 @@
     document.getElementById('play-platformer').addEventListener('click', () => { currentLevel = 0; document.getElementById('name-input').value = playerName; document.getElementById('level-select').value = '0'; showMenu(platformerMenu); });
     document.getElementById('play-snake').addEventListener('click', () => { document.getElementById('snake-difficulty').value = 'normal'; showMenu(snakeMenu); });
     document.getElementById('play-fps').addEventListener('click', () => { showMenu(fpsMenu); });
+    document.getElementById('play-music').addEventListener('click', () => { window.location.href = 'music.html'; });
     document.getElementById('fps-start-btn').addEventListener('click', () => { window.location.href = 'fps.html'; });
     document.getElementById('fps-back').addEventListener('click', () => { showMenu(mainMenu); });
     document.getElementById('tab-cloak-btn').addEventListener('click', () => { cloakTab(); alert('Tab cloaked! Title changed to about:blank'); });
