@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Game Hub - Login</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: linear-gradient(135deg, #0b1220 0%, #071029 100%); font-family: system-ui, Segoe UI, Roboto, Arial; color: #dfe7ff; overflow: hidden; }
+    .auth-container { display: flex; align-items: center; justify-content: center; height: 100%; padding: 20px; }
+    .auth-card { background: rgba(7, 16, 41, 0.95); border: 1px solid #2b6f86; border-radius: 12px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8); }
+    .auth-card h1 { margin: 0 0 10px 0; font-size: 28px; text-align: center; color: #6fbf3f; }
+    .auth-card p { text-align: center; color: #999; margin: 0 0 30px 0; font-size: 14px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input[type="text"], input[type="password"], input[type="email"] { width: 100%; padding: 12px; border: 1px solid #2b6f86; border-radius: 6px; background: #0f1724; color: #dfe7ff; font-size: 14px; }
+    input:focus { outline: none; border-color: #6fbf3f; box-shadow: 0 0 8px rgba(111, 191, 63, 0.3); }
+    button { width: 100%; padding: 12px; border: none; border-radius: 6px; background: #6fbf3f; color: #000; font-weight: 600; cursor: pointer; font-size: 14px; text-transform: uppercase; transition: all 0.3s; }
+    button:hover { background: #7fcf4f; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(111, 191, 63, 0.3); }
+    button:disabled { background: #4a8a2f; cursor: not-allowed; transform: none; opacity: 0.7; }
+    .toggle-mode { text-align: center; margin-top: 20px; font-size: 13px; color: #999; }
+    .toggle-mode a { color: #6fbf3f; cursor: pointer; text-decoration: none; }
+    .toggle-mode a:hover { text-decoration: underline; }
+    .error { background: rgba(255, 107, 107, 0.15); border: 1px solid #ff6b6b; color: #ff6b6b; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; display: none; }
+    .success { background: rgba(111, 191, 63, 0.15); border: 1px solid #6fbf3f; color: #6fbf3f; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; display: none; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div id="error-msg" class="error"></div>
+      <div id="success-msg" class="success"></div>
+
+      <!-- Login Form -->
+      <div id="login-form">
+        <h1>🎮 Game Hub</h1>
+        <p>Sign in to your account</p>
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" placeholder="Enter your username" required />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Enter your password" required />
+          </div>
+          <button type="submit">Login</button>
+        </form>
+        <div class="toggle-mode">Don't have an account? <a onclick="toggleForms()">Sign up</a></div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="register-form" class="hidden">
+        <h1>🎮 Game Hub</h1>
+        <p>Create a new account</p>
+        <form onsubmit="handleRegister(event)">
+          <div class="form-group">
+            <label for="register-username">Username</label>
+            <input type="text" id="register-username" placeholder="Choose a username" required minlength="3" maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label for="register-email">Email</label>
+            <input type="email" id="register-email" placeholder="Enter your email" required />
+          </div>
+          <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" placeholder="Create a strong password" required minlength="6" />
+          </div>
+          <div class="form-group">
+            <label for="register-password-confirm">Confirm Password</label>
+            <input type="password" id="register-password-confirm" placeholder="Confirm your password" required />
+          </div>
+          <button type="submit">Sign Up</button>
+        </form>
+        <div class="toggle-mode">Already have an account? <a onclick="toggleForms()">Sign in</a></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Security: Simple password hashing (in production, use bcrypt on backend)
+    function hashPassword(password) {
+      let hash = 0;
+      for (let i = 0; i < password.length; i++) {
+        const char = password.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      return Math.abs(hash).toString(16);
+    }
+
+    function toggleForms() {
+      document.getElementById('login-form').classList.toggle('hidden');
+      document.getElementById('register-form').classList.toggle('hidden');
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    function showError(message) {
+      const errorEl = document.getElementById('error-msg');
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+      setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
+    }
+
+    function showSuccess(message) {
+      const successEl = document.getElementById('success-msg');
+      successEl.textContent = message;
+      successEl.style.display = 'block';
+      setTimeout(() => { successEl.style.display = 'none'; }, 3000);
+    }
+
+    function handleRegister(event) {
+      event.preventDefault();
+      const username = document.getElementById('register-username').value.trim();
+      const email = document.getElementById('register-email').value.trim();
+      const password = document.getElementById('register-password').value;
+      const confirm = document.getElementById('register-password-confirm').value;
+
+      if (password !== confirm) {
+        showError('Passwords do not match');
+        return;
+      }
+
+      if (username.length < 3 || username.length > 20) {
+        showError('Username must be 3-20 characters');
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        showError('Username can only contain letters, numbers, underscores, and hyphens');
+        return;
+      }
+
+      // Get existing accounts
+      let accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+
+      if (accounts.find(a => a.username.toLowerCase() === username.toLowerCase())) {
+        showError('Username already exists');
+        return;
+      }
+
+      if (accounts.find(a => a.email.toLowerCase() === email.toLowerCase())) {
+        showError('Email already registered');
+        return;
+      }
+
+      // Create new account
+      const newAccount = {
+        username,
+        email,
+        passwordHash: hashPassword(password),
+        createdAt: new Date().toISOString(),
+        role: 'user',
+        banStatus: null
+      };
+
+      accounts.push(newAccount);
+      localStorage.setItem('accounts', JSON.stringify(accounts));
+      showSuccess('Account created! You can now log in.');
+      setTimeout(() => toggleForms(), 1500);
+      document.getElementById('register-form').reset();
+    }
+
+    function handleLogin(event) {
+      event.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+      const account = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
+
+      if (!account) {
+        showError('Invalid username or password');
+        return;
+      }
+
+      // Check if user is banned
+      if (account.banStatus) {
+        const banExpiry = new Date(account.banStatus.expiry);
+        if (banExpiry > new Date()) {
+          const duration = account.banStatus.duration === 'permanent' ? 'permanently' : `until ${banExpiry.toLocaleString()}`;
+          showError(`Your account has been banned ${duration}. Reason: ${account.banStatus.reason}`);
+          return;
+        } else {
+          // Ban expired, remove it
+          account.banStatus = null;
+          localStorage.setItem('accounts', JSON.stringify(accounts));
+        }
+      }
+
+      if (hashPassword(password) !== account.passwordHash) {
+        showError('Invalid username or password');
+        return;
+      }
+
+      // Login successful
+      sessionStorage.setItem('currentUser', JSON.stringify({
+        username: account.username,
+        email: account.email,
+        role: account.role,
+        loginTime: new Date().toISOString()
+      }));
+
+      // Check for announcements
+      const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+      if (announcements.length > 0) {
+        sessionStorage.setItem('pendingAnnouncement', JSON.stringify(announcements[0]));
+      }
+
+      window.location.href = 'index.html';
+    }
+
+    // Check if already logged in
+    if (sessionStorage.getItem('currentUser')) {
+      window.location.href = 'index.html';
+    }
+
+    // Admin setup on first load
+    window.addEventListener('load', () => {
+      let accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+      if (accounts.length === 0) {
+        // Create default admin account
+        const adminPassword = 'Admin@123'; // Change this after first login!
+        accounts.push({
+          username: 'Admin',
+          email: 'admin@gamehub.local',
+          passwordHash: hashPassword(adminPassword),
+          createdAt: new Date().toISOString(),
+          role: 'admin',
+          banStatus: null
+        });
+        localStorage.setItem('accounts', JSON.stringify(accounts));
+        console.log('%cAdmin Account Created!', 'color: #6fbf3f; font-size: 16px; font-weight: bold;');
+        console.log('%cUsername: Admin\nPassword: Admin@123\n⚠️ Change this password immediately after login!', 'color: #ff6b6b; font-size: 12px;');
+      }
+    });
+  </script>
+</body>
+</html>
