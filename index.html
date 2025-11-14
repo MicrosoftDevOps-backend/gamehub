@@ -65,7 +65,12 @@
             <button class="game-btn" id="play-fps">Play FPS</button>
             <button class="game-btn" id="play-music">Play Music Maker</button>
             <button class="game-btn" id="play-youtube">YouTube Downloader</button>
-            <button class="game-btn" id="tab-cloak-btn">Cloak Tab</button>
+              <button class="game-btn" id="play-flappy">Play Flappy Bird</button>
+              <button class="game-btn" id="play-breakout">Play Brick Breaker</button>
+              <button class="game-btn" id="play-memory">Play Memory Match</button>
+              <button class="game-btn" id="play-asteroids">Play Asteroid Blaster</button>
+              <button class="game-btn" id="play-whack">Play Whack-a-Mole</button>
+              <button class="game-btn" id="tab-cloak-btn">Cloak Tab</button>
           </div>
         </div>
       </div>
@@ -305,7 +310,12 @@
     document.getElementById('play-youtube').addEventListener('click', () => { stopMenuMusic(); window.location.href = 'youtube-downloader.html'; });
     document.getElementById('fps-start-btn').addEventListener('click', () => { window.location.href = 'fps.html'; });
     document.getElementById('fps-back').addEventListener('click', () => { showMenu(mainMenu); });
-    document.getElementById('tab-cloak-btn').addEventListener('click', () => { cloakTab(); alert('Tab cloaked! Title changed to about:blank'); });
+      document.getElementById('play-flappy').addEventListener('click', () => { window.location.href = 'flappy.html'; });
+      document.getElementById('play-breakout').addEventListener('click', () => { window.location.href = 'breakout.html'; });
+      document.getElementById('play-memory').addEventListener('click', () => { window.location.href = 'memory.html'; });
+      document.getElementById('play-asteroids').addEventListener('click', () => { window.location.href = 'asteroids.html'; });
+      document.getElementById('play-whack').addEventListener('click', () => { window.location.href = 'whack.html'; });
+      document.getElementById('tab-cloak-btn').addEventListener('click', () => { cloakTab(); alert('Tab cloaked! Title changed to about:blank'); });
     document.getElementById('name-save').addEventListener('click', () => { const s = sanitizeName(document.getElementById('name-input').value); playerName = s || 'Player'; localStorage.setItem('playerName', playerName); updateHUD(); });
     document.getElementById('code-apply').addEventListener('click', () => { const code = (document.getElementById('code-input').value || '').trim(); if (code === 'RAINBOW') { nameRainbow = true; localStorage.setItem('nameRainbow','true'); updateHUD(); alert('Rainbow name unlocked!'); } else { alert('Incorrect code.'); } });
     document.getElementById('level-select').addEventListener('change', (e) => { currentLevel = parseInt(e.target.value, 10); });
