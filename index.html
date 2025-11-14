@@ -10,6 +10,17 @@
         .hud { position:fixed; left:12px; top:12px; z-index:10; background:rgba(3,7,18,0.6); padding:8px 12px; border-radius:8px; }
         .instr { position:fixed; right:12px; top:12px; background:rgba(3,7,18,0.6); padding:8px 12px; border-radius:8px; }
         .back-btn { position:fixed; bottom:12px; left:12px; z-index:10; background:#2b6f86; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+        .user-panel { position:fixed; top:12px; left:12px; background:rgba(3,7,18,0.6); padding:12px; border-radius:8px; z-index:15; display:flex; gap:12px; align-items:center; }
+        .user-panel button { padding:6px 12px; background:#2b6f86; color:white; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
+        .user-panel button:hover { background:#3a8fa5; }
+        .admin-btn { background:#6fbf3f; color:#000; font-weight:600; }
+        .admin-btn:hover { background:#7fcf4f; }
+        #announcement { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#071029; border:2px solid #6fbf3f; border-radius:12px; padding:30px; max-width:600px; width:90%; z-index:1000; box-shadow:0 20px 60px rgba(0,0,0,0.8); display:none; text-align:center; animation:slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform:translate(-50%, -55%); opacity:0; } to { transform:translate(-50%, -50%); opacity:1; } }
+        #announcement h2 { margin:0 0 15px 0; color:#6fbf3f; font-size:20px; }
+        #announcement p { margin:0 0 20px 0; color:#dfe7ff; line-height:1.5; }
+        #announcement-dismiss { padding:8px 16px; background:#6fbf3f; color:#000; border:none; border-radius:6px; cursor:pointer; font-weight:600; }
+        #announcement-dismiss:hover { background:#7fcf4f; }
         a { color:#9cd0ff; }
         .menu { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(2,6,12,0.9); z-index:20; }
         .menu.hidden { display:none; }
@@ -28,6 +39,16 @@
     </style>
 </head>
 <body>
+    <div class="user-panel" id="user-panel" style="display:none;">
+      <span id="current-user">Player</span>
+      <button id="admin-panel-btn" class="admin-btn" style="display:none;">👑 Admin</button>
+      <button id="logout-btn">Logout</button>
+    </div>
+    <div id="announcement" style="display:none;">
+      <h2 id="announcement-title"></h2>
+      <p id="announcement-text"></p>
+      <button id="announcement-dismiss">Dismiss</button>
+    </div>
     <canvas id="game" width="960" height="540"></canvas>
     <div class="hud" id="hud"><span id="player-name" class="player-name">Player</span> — Score: <span id="score">0</span></div>
     <div class="instr" id="instr">← → Move &nbsp; ↑/Space Jump &nbsp; R Restart</div>
@@ -106,6 +127,56 @@
     </div>
 
     <script>
+    // Authentication check
+    window.addEventListener('load', () => {
+      const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+      if (!currentUser) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      // Setup user panel
+      document.getElementById('current-user').textContent = currentUser.username;
+      document.getElementById('user-panel').style.display = 'flex';
+      if (currentUser.role === 'admin') {
+        document.getElementById('admin-panel-btn').style.display = 'block';
+      }
+      
+      // Show announcement if available
+      const announcement = JSON.parse(sessionStorage.getItem('pendingAnnouncement') || 'null');
+      if (announcement) {
+        showAnnouncement(announcement);
+        sessionStorage.removeItem('pendingAnnouncement');
+      }
+      
+      // Setup logout button
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        sessionStorage.removeItem('currentUser');
+        window.location.href = 'login.html';
+      });
+      
+      // Setup admin button
+      document.getElementById('admin-panel-btn').addEventListener('click', () => {
+        window.location.href = 'admin.html';
+      });
+    });
+    
+    function showAnnouncement(announcement) {
+      document.getElementById('announcement-title').textContent = announcement.title;
+      document.getElementById('announcement-text').textContent = announcement.text;
+      document.getElementById('announcement').style.display = 'block';
+      
+      const duration = (announcement.duration || 5) * 1000;
+      const timer = setTimeout(() => {
+        document.getElementById('announcement').style.display = 'none';
+      }, duration);
+      
+      document.getElementById('announcement-dismiss').addEventListener('click', () => {
+        clearTimeout(timer);
+        document.getElementById('announcement').style.display = 'none';
+      });
+    }
+    
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     let currentGame = null, gameRunning = false, lastFrameTime = performance.now();
