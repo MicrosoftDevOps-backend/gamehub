@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Asteroid Blaster</title>
+  <style>
+    html, body { height: 100%; margin: 0; background: #0b1220; font-family: system-ui, Arial; color: #dfe7ff; overflow: hidden; }
+    canvas { display: block; background: #000; margin: 0; }
+    #hud { position: fixed; top: 20px; left: 20px; background: rgba(7,16,41,0.9); padding: 15px; border-radius: 8px; border: 1px solid #2b6f86; }
+    #hud span { font-size: 16px; margin-right: 20px; color: #6fbf3f; }
+    #instructions { position: fixed; bottom: 20px; left: 20px; font-size: 14px; color: #999; }
+    #gameOver { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 100; }
+    #gameOverContent { background: #071029; border: 2px solid #6fbf3f; border-radius: 12px; padding: 40px; text-align: center; }
+    #gameOverContent h1 { margin: 0 0 20px 0; color: #6fbf3f; font-size: 32px; }
+    #gameOverContent p { margin: 10px 0; font-size: 18px; }
+    button { padding: 12px 24px; background: #6fbf3f; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px; margin-top: 20px; }
+    button:hover { background: #7fcf4f; }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <span>Score: <span id="score">0</span></span>
+    <span>Lives: <span id="lives">3</span></span>
+    <span>Wave: <span id="wave">1</span></span>
+  </div>
+  <div id="instructions">Arrow Keys to Move • Space to Shoot</div>
+  <canvas id="game"></canvas>
+  <div id="gameOver">
+    <div id="gameOverContent">
+      <h1>Game Over!</h1>
+      <p>Final Score: <span id="finalScore">0</span></p>
+      <button onclick="location.href='index.html'">Back to Hub</button>
+      <button onclick="location.reload()">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const player = { x: canvas.width / 2, y: canvas.height - 50, radius: 15, vx: 0, speed: 5, angle: 0 };
+    const bullets = [];
+    const asteroids = [];
+    const keys = {};
+    let score = 0, lives = 3, wave = 1, gameRunning = true;
+
+    function spawnAsteroids(count, size = 3, x = null, y = null) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1 + Math.random() * 2;
+        asteroids.push({
+          x: x !== null ? x + (Math.random() - 0.5) * 20 : Math.random() * canvas.width,
+          y: y !== null ? y + (Math.random() - 0.5) * 20 : Math.random() * canvas.height * 0.3,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: size * 8,
+          size: size,
+          rotation: 0,
+          rotationSpeed: (Math.random() - 0.5) * 0.1
+        });
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        bullets.push({
+          x: player.x + Math.cos(player.angle) * player.radius,
+          y: player.y + Math.sin(player.angle) * player.radius,
+          vx: Math.cos(player.angle) * 7,
+          vy: Math.sin(player.angle) * 7,
+          life: 120
+        });
+      }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    function update() {
+      if (!gameRunning) return;
+
+      // Player movement
+      if (keys['ArrowLeft'] || keys['KeyA']) player.angle -= 0.1;
+      if (keys['ArrowRight'] || keys['KeyD']) player.angle += 0.1;
+      if (keys['ArrowUp'] || keys['KeyW']) {
+        player.x += Math.cos(player.angle) * player.speed;
+        player.y += Math.sin(player.angle) * player.speed;
+      }
+
+      player.x = (player.x + canvas.width) % canvas.width;
+      player.y = (player.y + canvas.height) % canvas.height;
+
+      // Update bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].x += bullets[i].vx;
+        bullets[i].y += bullets[i].vy;
+        bullets[i].life--;
+        if (bullets[i].life <= 0 || bullets[i].x < 0 || bullets[i].x > canvas.width ||
+            bullets[i].y < 0 || bullets[i].y > canvas.height) {
+          bullets.splice(i, 1);
+        }
+      }
+
+      // Update asteroids
+      for (let i = asteroids.length - 1; i >= 0; i--) {
+        const ast = asteroids[i];
+        ast.x += ast.vx;
+        ast.y += ast.vy;
+        ast.rotation += ast.rotationSpeed;
+
+        ast.x = (ast.x + canvas.width) % canvas.width;
+        ast.y = (ast.y + canvas.height) % canvas.height;
+
+        // Collision with bullets
+        for (let j = bullets.length - 1; j >= 0; j--) {
+          const dist = Math.hypot(bullets[j].x - ast.x, bullets[j].y - ast.y);
+          if (dist < ast.radius + 5) {
+            score += (4 - ast.size) * 10;
+            document.getElementById('score').textContent = score;
+            bullets.splice(j, 1);
+            asteroids.splice(i, 1);
+            if (ast.size > 1) {
+              spawnAsteroids(2, ast.size - 1, ast.x, ast.y);
+            }
+            break;
+          }
+        }
+      }
+
+      // Collision with player
+      for (let ast of asteroids) {
+        const dist = Math.hypot(player.x - ast.x, player.y - ast.y);
+        if (dist < player.radius + ast.radius) {
+          lives--;
+          document.getElementById('lives').textContent = lives;
+          if (lives <= 0) {
+            gameRunning = false;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').style.display = 'flex';
+          } else {
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 50;
+          }
+        }
+      }
+
+      // Next wave
+      if (asteroids.length === 0) {
+        wave++;
+        document.getElementById('wave').textContent = wave;
+        spawnAsteroids(3 + wave);
+      }
+    }
+
+    function draw() {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw asteroids
+      ctx.fillStyle = '#2b6f86';
+      ctx.strokeStyle = '#6fbf3f';
+      ctx.lineWidth = 2;
+      for (let ast of asteroids) {
+        ctx.save();
+        ctx.translate(ast.x, ast.y);
+        ctx.rotate(ast.rotation);
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          const x = Math.cos(angle) * ast.radius;
+          const y = Math.sin(angle) * ast.radius;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Draw bullets
+      ctx.fillStyle = '#ff6b6b';
+      for (let bullet of bullets) {
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw player
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.rotate(player.angle);
+      ctx.fillStyle = '#6fbf3f';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(player.radius, 0);
+      ctx.lineTo(-player.radius, -player.radius);
+      ctx.lineTo(-player.radius / 2, 0);
+      ctx.lineTo(-player.radius, player.radius);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    spawnAsteroids(3 + wave);
+    gameLoop();
+  </script>
+</body>
+</html>
