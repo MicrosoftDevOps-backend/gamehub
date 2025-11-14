@@ -1,352 +1,958 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin Panel</title>
-  <style>
-    html, body { height: 100%; margin: 0; background: #0b1220; font-family: system-ui, Segoe UI, Roboto, Arial; color: #dfe7ff; overflow: hidden; }
-    #container { display: flex; height: 100%; }
-    #sidebar { width: 250px; background: #071029; border-right: 1px solid #2b6f86; display: flex; flex-direction: column; }
-    #content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    #header { background: #0f1724; border-bottom: 1px solid #2b6f86; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
-    #header h1 { margin: 0; font-size: 20px; color: #6fbf3f; }
-    .user-info { font-size: 13px; color: #999; }
-    #nav { flex: 1; padding: 20px 0; overflow-y: auto; }
-    .nav-item { padding: 12px 20px; cursor: pointer; color: #999; border-left: 3px solid transparent; transition: all 0.3s; }
-    .nav-item:hover { background: rgba(111, 191, 63, 0.1); color: #dfe7ff; }
-    .nav-item.active { background: rgba(111, 191, 63, 0.15); border-left-color: #6fbf3f; color: #6fbf3f; font-weight: 600; }
-    #logout-btn { margin: 20px; padding: 10px; background: #ff6b6b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    #logout-btn:hover { background: #ff8787; }
-    #main { flex: 1; padding: 20px; overflow-y: auto; }
-    .section { display: none; }
-    .section.active { display: block; }
-    .section h2 { margin: 0 0 20px 0; color: #6fbf3f; font-size: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    table th { background: #0f1724; padding: 12px; text-align: left; border: 1px solid #2b6f86; font-weight: 600; }
-    table td { padding: 12px; border: 1px solid #2b6f86; background: rgba(15, 23, 36, 0.5); }
-    table tr:hover td { background: rgba(111, 191, 63, 0.05); }
-    .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s; }
-    .btn-ban { background: #ff6b6b; color: #fff; }
-    .btn-ban:hover { background: #ff8787; }
-    .btn-unban { background: #6fbf3f; color: #000; }
-    .btn-unban:hover { background: #7fcf4f; }
-    .form-group { margin-bottom: 20px; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; }
-    input[type="text"], input[type="email"], input[type="number"], select, textarea { width: 100%; padding: 10px; border: 1px solid #2b6f86; border-radius: 6px; background: #0f1724; color: #dfe7ff; font-size: 13px; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: #6fbf3f; box-shadow: 0 0 8px rgba(111, 191, 63, 0.3); }
-    button[type="submit"] { background: #6fbf3f; color: #000; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    button[type="submit"]:hover { background: #7fcf4f; }
-    button[type="submit"]:disabled { background: #4a8a2f; cursor: not-allowed; }
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center; z-index: 1000; }
-    .modal.active { display: flex; }
-    .modal-content { background: #071029; border: 1px solid #2b6f86; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; }
-    .modal-content h2 { margin: 0 0 20px 0; color: #6fbf3f; }
-    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-    .modal-actions button { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    .modal-cancel { background: #2b6f86; color: #fff; }
-    .modal-cancel:hover { background: #3a8fa5; }
-    .modal-confirm { background: #ff6b6b; color: #fff; }
-    .modal-confirm:hover { background: #ff8787; }
-    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-    .status-active { background: rgba(111, 191, 63, 0.2); color: #6fbf3f; }
-    .status-banned { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
-    .message { padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; }
-    .message.success { background: rgba(111, 191, 63, 0.15); border: 1px solid #6fbf3f; color: #6fbf3f; }
-    .message.error { background: rgba(255, 107, 107, 0.15); border: 1px solid #ff6b6b; color: #ff6b6b; }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin Panel</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: #0b1220;
+            font-family: system-ui, Segoe UI, Roboto, Arial;
+            color: #dfe7ff;
+            overflow: hidden;
+        }
+ 
+        #container {
+            display: flex;
+            height: 100%;
+        }
+ 
+        #sidebar {
+            width: 250px;
+            background: #071029;
+            border-right: 1px solid #2b6f86;
+            display: flex;
+            flex-direction: column;
+        }
+ 
+        #content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+ 
+        #header {
+            background: #0f1724;
+            border-bottom: 1px solid #2b6f86;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+ 
+            #header h1 {
+                margin: 0;
+                font-size: 20px;
+                color: #6fbf3f;
+            }
+ 
+        .user-info {
+            font-size: 13px;
+            color: #999;
+        }
+ 
+        #nav {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+ 
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: #999;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+ 
+            .nav-item:hover {
+                background: rgba(111, 191, 63, 0.1);
+                color: #dfe7ff;
+            }
+ 
+            .nav-item.active {
+                background: rgba(111, 191, 63, 0.15);
+                border-left-color: #6fbf3f;
+                color: #6fbf3f;
+                font-weight: 600;
+            }
+ 
+        #logout-btn {
+            margin: 20px;
+            padding: 10px;
+            background: #ff6b6b;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+ 
+            #logout-btn:hover {
+                background: #ff8787;
+            }
+ 
+        #main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+ 
+        .section {
+            display: none;
+        }
+ 
+            .section.active {
+                display: block;
+            }
+ 
+            .section h2 {
+                margin: 0 0 20px 0;
+                color: #6fbf3f;
+                font-size: 20px;
+            }
+ 
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+ 
+            table th {
+                background: #0f1724;
+                padding: 12px;
+                text-align: left;
+                border: 1px solid #2b6f86;
+                font-weight: 600;
+            }
+ 
+            table td {
+                padding: 12px;
+                border: 1px solid #2b6f86;
+                background: rgba(15, 23, 36, 0.5);
+            }
+ 
+            table tr:hover td {
+                background: rgba(111, 191, 63, 0.05);
+            }
+ 
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+ 
+        .btn-ban {
+            background: #ff6b6b;
+            color: #fff;
+        }
+ 
+            .btn-ban:hover {
+                background: #ff8787;
+            }
+ 
+        .btn-unban {
+            background: #6fbf3f;
+            color: #000;
+        }
+ 
+            .btn-unban:hover {
+                background: #7fcf4f;
+            }
+ 
+        .form-group {
+            margin-bottom: 20px;
+        }
+ 
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+ 
+        input[type="text"], input[type="email"], input[type="number"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #2b6f86;
+            border-radius: 6px;
+            background: #0f1724;
+            color: #dfe7ff;
+            font-size: 13px;
+        }
+ 
+            input:focus, select:focus, textarea:focus {
+                outline: none;
+                border-color: #6fbf3f;
+                box-shadow: 0 0 8px rgba(111, 191, 63, 0.3);
+            }
+ 
+        button[type="submit"] {
+            background: #6fbf3f;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+ 
+            button[type="submit"]:hover {
+                background: #7fcf4f;
+            }
+ 
+            button[type="submit"]:disabled {
+                background: #4a8a2f;
+                cursor: not-allowed;
+            }
+ 
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+ 
+            .modal.active {
+                display: flex;
+            }
+ 
+        .modal-content {
+            background: #071029;
+            border: 1px solid #2b6f86;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+ 
+            .modal-content h2 {
+                margin: 0 0 20px 0;
+                color: #6fbf3f;
+            }
+ 
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+ 
+            .modal-actions button {
+                flex: 1;
+                padding: 10px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+            }
+ 
+        .modal-cancel {
+            background: #2b6f86;
+            color: #fff;
+        }
+ 
+            .modal-cancel:hover {
+                background: #3a8fa5;
+            }
+ 
+        .modal-confirm {
+            background: #ff6b6b;
+            color: #fff;
+        }
+ 
+            .modal-confirm:hover {
+                background: #ff8787;
+            }
+ 
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+ 
+        .status-active {
+            background: rgba(111, 191, 63, 0.2);
+            color: #6fbf3f;
+        }
+ 
+        .status-banned {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+ 
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+ 
+            .message.success {
+                background: rgba(111, 191, 63, 0.15);
+                border: 1px solid #6fbf3f;
+                color: #6fbf3f;
+            }
+ 
+            .message.error {
+                background: rgba(255, 107, 107, 0.15);
+                border: 1px solid #ff6b6b;
+                color: #ff6b6b;
+            }
+ 
+        .small-muted {
+            font-size: 12px;
+            color: #999;
+        }
+ 
+        .role-protected {
+            opacity: 0.7;
+        }
+    </style>
 </head>
 <body>
-  <div id="container">
-    <div id="sidebar">
-      <div style="padding: 20px; border-bottom: 1px solid #2b6f86;">
-        <h2 style="margin: 0; color: #6fbf3f; font-size: 18px;">⚙️ Admin Panel</h2>
-      </div>
-      <nav id="nav">
-        <div class="nav-item active" onclick="switchSection('users')">👥 Users</div>
-        <div class="nav-item" onclick="switchSection('announcements')">📢 Announcements</div>
-      </nav>
-      <button id="logout-btn">Logout</button>
-    </div>
-
-    <div id="content">
-      <div id="header">
-        <h1>Admin Dashboard</h1>
-        <div class="user-info">
-          Logged in as: <strong id="admin-username">Admin</strong>
-        </div>
-      </div>
-
-      <div id="main">
-        <!-- Users Section -->
-        <div id="users" class="section active">
-          <h2>User Management</h2>
-          <div id="users-message" class="message"></div>
-          <table id="users-table">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Joined</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="users-tbody">
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Announcements Section -->
-        <div id="announcements" class="section">
-          <h2>System Announcements</h2>
-          <div id="announcements-message" class="message"></div>
-          <div class="form-group">
-            <label for="announcement-title">Announcement Title</label>
-            <input type="text" id="announcement-title" placeholder="Enter announcement title" />
-          </div>
-          <div class="form-group">
-            <label for="announcement-text">Announcement Text</label>
-            <textarea id="announcement-text" placeholder="Enter announcement message" rows="6"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="announcement-duration">Display Duration (seconds)</label>
-            <input type="number" id="announcement-duration" value="5" min="1" max="60" />
-          </div>
-          <button type="submit" onclick="postAnnouncement()">Post Announcement</button>
-          <h3 style="margin-top: 30px; color: #6fbf3f;">Current Announcements</h3>
-          <div id="announcements-list"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Ban Modal -->
-  <div id="ban-modal" class="modal">
-    <div class="modal-content">
-      <h2>Ban User</h2>
-      <input type="hidden" id="ban-username" />
-      <div class="form-group">
-        <label for="ban-type">Ban Duration</label>
-        <select id="ban-type" onchange="updateBanDuration()">
-          <option value="1hour">1 Hour</option>
-          <option value="1day">1 Day</option>
-          <option value="7days">7 Days</option>
-          <option value="permanent">Permanent</option>
-          <option value="custom">Custom (Days)</option>
-        </select>
-      </div>
-      <div class="form-group" id="custom-days-group" style="display: none;">
-        <label for="custom-days">Number of Days</label>
-        <input type="number" id="custom-days" value="1" min="1" max="365" />
-      </div>
-      <div class="form-group">
-        <label for="ban-reason">Reason</label>
-        <textarea id="ban-reason" placeholder="Enter ban reason" rows="3"></textarea>
-      </div>
-      <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeBanModal()">Cancel</button>
-        <button class="modal-confirm" onclick="confirmBan()">Ban User</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Check if user is admin
-    window.addEventListener('load', () => {
-      const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
-      if (!currentUser || currentUser.role !== 'admin') {
-        alert('Access denied. Admin only.');
-        window.location.href = 'index.html';
-        return;
-      }
-      document.getElementById('admin-username').textContent = currentUser.username;
-      loadUsers();
-      loadAnnouncements();
-    });
-
-    function switchSection(section) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.getElementById(section).classList.add('active');
-      event.target.classList.add('active');
-    }
-
-    function loadUsers() {
-      const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
-      const tbody = document.getElementById('users-tbody');
-      tbody.innerHTML = '';
-
-      accounts.forEach(account => {
-        const joined = new Date(account.createdAt).toLocaleDateString();
-        const isBanned = account.banStatus && new Date(account.banStatus.expiry) > new Date();
-        const status = isBanned ? 'Banned' : 'Active';
-        const statusClass = isBanned ? 'status-banned' : 'status-active';
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td><strong>${escapeHtml(account.username)}</strong></td>
-          <td>${escapeHtml(account.email)}</td>
-          <td>${joined}</td>
-          <td>${account.role === 'admin' ? '👑 Admin' : 'User'}</td>
-          <td><span class="status-badge ${statusClass}">${status}</span></td>
-          <td>
-            ${account.role === 'user' ? `
-              ${!isBanned ? `<button class="btn btn-ban" onclick="openBanModal('${escapeAttr(account.username)}')">Ban</button>` : `<button class="btn btn-unban" onclick="unbanUser('${escapeAttr(account.username)}')">Unban</button>`}
-            ` : '<em style="color: #999;">Cannot ban admin</em>'}
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    function openBanModal(username) {
-      document.getElementById('ban-username').value = username;
-      document.getElementById('ban-type').value = '1day';
-      document.getElementById('ban-reason').value = '';
-      document.getElementById('custom-days-group').style.display = 'none';
-      document.getElementById('ban-modal').classList.add('active');
-    }
-
-    function closeBanModal() {
-      document.getElementById('ban-modal').classList.remove('active');
-    }
-
-    function updateBanDuration() {
-      const type = document.getElementById('ban-type').value;
-      document.getElementById('custom-days-group').style.display = type === 'custom' ? 'block' : 'none';
-    }
-
-    function confirmBan() {
-      const username = document.getElementById('ban-username').value;
-      const banType = document.getElementById('ban-type').value;
-      const customDays = parseInt(document.getElementById('custom-days').value) || 1;
-      const reason = document.getElementById('ban-reason').value || 'No reason provided';
-
-      const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
-      const account = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
-
-      if (!account) {
-        showMessage('User not found', 'error', 'users-message');
-        return;
-      }
-
-      let expiry;
-      if (banType === 'permanent') {
-        expiry = new Date('2099-12-31').toISOString();
-      } else {
-        const days = banType === '1hour' ? 1/24 : banType === '1day' ? 1 : banType === '7days' ? 7 : customDays;
-        expiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-      }
-
-      account.banStatus = {
-        bannedAt: new Date().toISOString(),
-        expiry,
-        duration: banType === 'permanent' ? 'permanent' : `${banType}`,
-        reason,
-        bannedBy: JSON.parse(sessionStorage.getItem('currentUser')).username
-      };
-
-      localStorage.setItem('accounts', JSON.stringify(accounts));
-      closeBanModal();
-      loadUsers();
-      showMessage(`User "${username}" has been banned.`, 'success', 'users-message');
-    }
-
-    function unbanUser(username) {
-      const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
-      const account = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
-
-      if (account) {
-        account.banStatus = null;
-        localStorage.setItem('accounts', JSON.stringify(accounts));
-        loadUsers();
-        showMessage(`User "${username}" has been unbanned.`, 'success', 'users-message');
-      }
-    }
-
-    function postAnnouncement() {
-      const title = document.getElementById('announcement-title').value.trim();
-      const text = document.getElementById('announcement-text').value.trim();
-      const duration = parseInt(document.getElementById('announcement-duration').value) || 5;
-
-      if (!title || !text) {
-        showMessage('Please fill in all fields', 'error', 'announcements-message');
-        return;
-      }
-
-      const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
-      announcements.unshift({
-        id: Date.now(),
-        title: escapeHtml(title),
-        text: escapeHtml(text),
-        duration,
-        postedAt: new Date().toISOString(),
-        postedBy: JSON.parse(sessionStorage.getItem('currentUser')).username
-      });
-
-      localStorage.setItem('announcements', JSON.stringify(announcements));
-      document.getElementById('announcement-title').value = '';
-      document.getElementById('announcement-text').value = '';
-      document.getElementById('announcement-duration').value = '5';
-      loadAnnouncements();
-      showMessage('Announcement posted successfully!', 'success', 'announcements-message');
-    }
-
-    function loadAnnouncements() {
-      const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
-      const list = document.getElementById('announcements-list');
-      list.innerHTML = '';
-
-      announcements.forEach(ann => {
-        const posted = new Date(ann.postedAt).toLocaleString();
-        const div = document.createElement('div');
-        div.style.cssText = 'background: #0f1724; border: 1px solid #2b6f86; border-radius: 6px; padding: 15px; margin-bottom: 10px;';
-        div.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: start;">
-            <div>
-              <h4 style="margin: 0 0 8px 0; color: #6fbf3f;">${ann.title}</h4>
-              <p style="margin: 0 0 8px 0; color: #dfe7ff; font-size: 13px;">${ann.text}</p>
-              <small style="color: #999;">Posted by ${escapeHtml(ann.postedBy)} on ${posted}</small>
+    <div id="container">
+        <div id="sidebar">
+            <div style="padding: 20px; border-bottom: 1px solid #2b6f86;">
+                <h2 style="margin: 0; color: #6fbf3f; font-size: 18px;">⚙️ Admin Panel</h2>
             </div>
-            <button class="btn btn-ban" onclick="deleteAnnouncement(${ann.id})">Delete</button>
-          </div>
-        `;
-        list.appendChild(div);
-      });
-    }
-
-    function deleteAnnouncement(id) {
-      const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
-      const filtered = announcements.filter(a => a.id !== id);
-      localStorage.setItem('announcements', JSON.stringify(filtered));
-      loadAnnouncements();
-      showMessage('Announcement deleted.', 'success', 'announcements-message');
-    }
-
-    function showMessage(text, type, elementId) {
-      const el = document.getElementById(elementId);
-      el.textContent = text;
-      el.className = `message ${type}`;
-      el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, 4000);
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function escapeAttr(text) {
-      return text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    }
-
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      sessionStorage.removeItem('currentUser');
-      window.location.href = 'login.html';
-    });
-  </script>
+            <nav id="nav">
+                <div class="nav-item active" onclick="switchSection('users')">👥 Users</div>
+                <div class="nav-item" onclick="switchSection('announcements')">📢 Announcements</div>
+                <div class="nav-item" onclick="switchSection('roles')">🔐 Roles</div>
+            </nav>
+            <button id="logout-btn">Logout</button>
+        </div>
+ 
+        <div id="content">
+            <div id="header">
+                <h1>Admin Dashboard</h1>
+                <div class="user-info">
+                    Logged in as: <strong id="admin-username">Admin</strong>
+                </div>
+            </div>
+ 
+            <div id="main">
+                <!-- Users Section -->
+                <div id="users" class="section active">
+                    <h2>User Management</h2>
+                    <div id="users-message" class="message"></div>
+                    <table id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                        </tbody>
+                    </table>
+                </div>
+ 
+                <!-- Announcements Section -->
+                <div id="announcements" class="section">
+                    <h2>System Announcements</h2>
+                    <div id="announcements-message" class="message"></div>
+                    <div class="form-group">
+                        <label for="announcement-title">Announcement Title</label>
+                        <input type="text" id="announcement-title" placeholder="Enter announcement title" />
+                    </div>
+                    <div class="form-group">
+                        <label for="announcement-text">Announcement Text</label>
+                        <textarea id="announcement-text" placeholder="Enter announcement message" rows="6"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="announcement-duration">Display Duration (seconds)</label>
+                        <input type="number" id="announcement-duration" value="5" min="1" max="60" />
+                    </div>
+                    <button type="submit" id="post-ann-btn">Post Announcement</button>
+                    <h3 style="margin-top: 30px; color: #6fbf3f;">Current Announcements</h3>
+                    <div id="announcements-list"></div>
+                </div>
+ 
+                <!-- Roles Section -->
+                <div id="roles" class="section">
+                    <h2>Roles & Permissions</h2>
+                    <div id="roles-message" class="message"></div>
+ 
+                    <div id="roles-form" style="max-width: 600px;">
+                        <div class="form-group">
+                            <label for="role-name">Role Name</label>
+                            <input type="text" id="role-name" placeholder="e.g. Community Moderator" />
+                        </div>
+ 
+                        <div class="form-group">
+                            <label>Permissions</label>
+                            <label><input type="checkbox" id="perm-ban" /> Can ban/unban users</label><br />
+                            <label><input type="checkbox" id="perm-announce" /> Can post announcements</label><br />
+                            <label><input type="checkbox" id="perm-delete-ann" /> Can delete announcements</label><br />
+                            <label><input type="checkbox" id="perm-manage-roles" /> Can create/delete/assign roles</label><br />
+                            <small class="small-muted">Owner and protected roles cannot be removed.</small>
+                        </div>
+ 
+                        <button type="submit" id="create-role-btn">Create Role</button>
+                    </div>
+ 
+                    <h3 style="margin-top: 30px; color: #6fbf3f;">Existing Roles</h3>
+                    <table id="roles-table">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Name</th>
+                                <th>Permissions</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roles-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- Ban Modal -->
+    <div id="ban-modal" class="modal">
+        <div class="modal-content">
+            <h2>Ban User</h2>
+            <input type="hidden" id="ban-username" />
+            <div class="form-group">
+                <label for="ban-type">Ban Duration</label>
+                <select id="ban-type" onchange="updateBanDuration()">
+                    <option value="1hour">1 Hour</option>
+                    <option value="1day">1 Day</option>
+                    <option value="7days">7 Days</option>
+                    <option value="permanent">Permanent</option>
+                    <option value="custom">Custom (Days)</option>
+                </select>
+            </div>
+            <div class="form-group" id="custom-days-group" style="display: none;">
+                <label for="custom-days">Number of Days</label>
+                <input type="number" id="custom-days" value="1" min="1" max="365" />
+            </div>
+            <div class="form-group">
+                <label for="ban-reason">Reason</label>
+                <textarea id="ban-reason" placeholder="Enter ban reason" rows="3"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-cancel" onclick="closeBanModal()">Cancel</button>
+                <button class="modal-confirm" onclick="confirmBan()">Ban User</button>
+            </div>
+        </div>
+    </div>
+ 
+    <script>
+        // --- Roles system: default roles, permissions and management ---
+        const DEFAULT_ROLES = [
+            {
+                key: 'owner',
+                name: 'Owner',
+                protected: true,
+                permissions: {
+                    ban: true,
+                    announce: true,
+                    deleteAnnouncement: true,
+                    manageRoles: true,
+                    accessAdmin: true,
+                    assignRoles: true
+                }
+            },
+            {
+                key: 'admin',
+                name: 'Admin',
+                protected: true,
+                permissions: {
+                    ban: true,
+                    announce: true,
+                    deleteAnnouncement: true,
+                    accessAdmin: true,
+                    assignRoles: false,
+                    manageRoles: false
+                }
+            },
+            {
+                key: 'moderator',
+                name: 'Moderator',
+                protected: true,
+                permissions: {
+                    ban: true,
+                    announce: false,
+                    deleteAnnouncement: false,
+                    accessAdmin: true,
+                    assignRoles: false,
+                    manageRoles: false
+                }
+            },
+            {
+                key: 'user',
+                name: 'User',
+                protected: true,
+                permissions: {
+                    ban: false,
+                    announce: false,
+                    deleteAnnouncement: false,
+                    accessAdmin: false,
+                    assignRoles: false,
+                    manageRoles: false
+                }
+            }
+        ];
+ 
+        function loadOrInitRoles() {
+            let roles = JSON.parse(localStorage.getItem('roles') || 'null');
+            if (!roles) {
+                roles = DEFAULT_ROLES;
+                localStorage.setItem('roles', JSON.stringify(roles));
+            }
+            return roles;
+        }
+ 
+        function saveRoles(roles) {
+            localStorage.setItem('roles', JSON.stringify(roles));
+        }
+ 
+        function getRole(key) {
+            const roles = loadOrInitRoles();
+            return roles.find(r => r.key === key) || roles.find(r => r.key === 'user');
+        }
+ 
+        function roleHasPermission(roleKey, perm) {
+            const role = getRole(roleKey);
+            return role && !!role.permissions[perm];
+        }
+ 
+        // --- Initialization & access control ---
+        window.addEventListener('load', () => {
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+            if (!currentUser) {
+                alert('Access denied. Admin only.');
+                window.location.href = 'index.html';
+                return;
+            }
+ 
+            // If stored role doesn't map to a role in roles list, default to 'user'
+            const roles = loadOrInitRoles();
+            if (!roles.some(r => r.key === currentUser.role)) {
+                currentUser.role = 'user';
+                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            }
+ 
+            if (!roleHasPermission(currentUser.role, 'accessAdmin')) {
+                alert('Access denied. Admin only.');
+                window.location.href = 'index.html';
+                return;
+            }
+ 
+            document.getElementById('admin-username').textContent = currentUser.username;
+            bindUI();
+            loadUsers();
+            loadAnnouncements();
+            renderRoles();
+        });
+ 
+        function bindUI() {
+            document.getElementById('create-role-btn').addEventListener('click', createRole);
+            document.getElementById('post-ann-btn').addEventListener('click', postAnnouncement);
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (ev) => {
+                    const target = ev.target;
+                    const section = target.getAttribute('onclick')?.match(/'(.+)'/)?.[1];
+                    // fallback if parsing fails
+                    const sections = ['users', 'announcements', 'roles'];
+                    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    // find by text content
+                    if (target.textContent.includes('Users')) document.getElementById('users').classList.add('active'), target.classList.add('active');
+                    else if (target.textContent.includes('Announcements')) document.getElementById('announcements').classList.add('active'), target.classList.add('active');
+                    else if (target.textContent.includes('Roles')) document.getElementById('roles').classList.add('active'), target.classList.add('active');
+                });
+            });
+        }
+ 
+        function switchSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+            event.target.classList.add('active');
+        }
+ 
+        // --- Users management with role assignment ---
+        function loadUsers() {
+            const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '';
+ 
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+            const canManageRoles = currentUser && roleHasPermission(currentUser.role, 'manageRoles') || (currentUser && roleHasPermission(currentUser.role, 'assignRoles'));
+            const canBan = currentUser && roleHasPermission(currentUser.role, 'ban');
+ 
+            accounts.forEach(account => {
+                const joined = new Date(account.createdAt).toLocaleDateString();
+                const isBanned = account.banStatus && new Date(account.banStatus.expiry) > new Date();
+                const status = isBanned ? 'Banned' : 'Active';
+                const statusClass = isBanned ? 'status-banned' : 'status-active';
+ 
+                const row = document.createElement('tr');
+ 
+                // Username cell
+                const tdUser = document.createElement('td');
+                tdUser.innerHTML = `<strong>${escapeHtml(account.username)}</strong>`;
+                row.appendChild(tdUser);
+ 
+                // Email cell
+                const tdEmail = document.createElement('td');
+                tdEmail.textContent = account.email || '';
+                row.appendChild(tdEmail);
+ 
+                // Joined
+                const tdJoined = document.createElement('td');
+                tdJoined.textContent = joined;
+                row.appendChild(tdJoined);
+ 
+                // Role cell: show dropdown if current user can assign/manage roles and doesn't try to change Owner unless owner
+                const tdRole = document.createElement('td');
+                const roles = loadOrInitRoles();
+ 
+                const isOwnerAccount = account.role === 'owner';
+                if (canManageRoles) {
+                    const select = document.createElement('select');
+                    roles.forEach(r => {
+                        const opt = document.createElement('option');
+                        opt.value = r.key;
+                        opt.textContent = r.name + (r.protected ? ' (protected)' : '');
+                        if (r.key === account.role) opt.selected = true;
+                        if (r.protected) opt.className = 'role-protected';
+                        select.appendChild(opt);
+                    });
+ 
+                    // prevent non-owner changing the Owner account's role
+                    if (isOwnerAccount && !(JSON.parse(sessionStorage.getItem('currentUser') || '{}').role === 'owner')) {
+                        select.disabled = true;
+                    }
+ 
+                    select.addEventListener('change', (ev) => {
+                        const newRole = ev.target.value;
+                        // prevent demoting owner unless current user is owner
+                        const current = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+                        if (account.role === 'owner' && current.role !== 'owner') {
+                            showMessage('Only the Owner can change the Owner role.', 'error', 'roles-message');
+                            loadUsers();
+                            return;
+                        }
+ 
+                        account.role = newRole;
+                        localStorage.setItem('accounts', JSON.stringify(accounts));
+                        loadUsers();
+                        showMessage(`Role for "${account.username}" updated to ${getRole(newRole).name}.`, 'success', 'users-message');
+                    });
+ 
+                    tdRole.appendChild(select);
+                } else {
+                    tdRole.textContent = getRole(account.role).name;
+                }
+                row.appendChild(tdRole);
+ 
+                // Status
+                const tdStatus = document.createElement('td');
+                tdStatus.innerHTML = `<span class="status-badge ${statusClass}">${status}</span>`;
+                row.appendChild(tdStatus);
+ 
+                // Actions
+                const tdActions = document.createElement('td');
+ 
+                // Only show ban/unban if current user can ban and target isn't owner
+                if (canBan && account.role !== 'owner') {
+                    if (!isBanned) {
+                        const banBtn = document.createElement('button');
+                        banBtn.className = 'btn btn-ban';
+                        banBtn.textContent = 'Ban';
+                        banBtn.addEventListener('click', () => openBanModal(account.username));
+                        tdActions.appendChild(banBtn);
+                    } else {
+                        const unbanBtn = document.createElement('button');
+                        unbanBtn.className = 'btn btn-unban';
+                        unbanBtn.textContent = 'Unban';
+                        unbanBtn.addEventListener('click', () => unbanUser(account.username));
+                        tdActions.appendChild(unbanBtn);
+                    }
+                } else {
+                    tdActions.innerHTML = '<em style="color: #999;">No actions</em>';
+                }
+ 
+                row.appendChild(tdActions);
+                tbody.appendChild(row);
+            });
+        }
+ 
+        function openBanModal(username) {
+            document.getElementById('ban-username').value = username;
+            document.getElementById('ban-type').value = '1day';
+            document.getElementById('ban-reason').value = '';
+            document.getElementById('custom-days-group').style.display = 'none';
+            document.getElementById('ban-modal').classList.add('active');
+        }
+ 
+        function closeBanModal() {
+            document.getElementById('ban-modal').classList.remove('active');
+        }
+ 
+        function updateBanDuration() {
+            const type = document.getElementById('ban-type').value;
+            document.getElementById('custom-days-group').style.display = type === 'custom' ? 'block' : 'none';
+        }
+ 
+        function confirmBan() {
+            const username = document.getElementById('ban-username').value;
+            const banType = document.getElementById('ban-type').value;
+            const customDays = parseInt(document.getElementById('custom-days').value) || 1;
+            const reason = document.getElementById('ban-reason').value || 'No reason provided';
+ 
+            const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+            const account = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
+ 
+            if (!account) {
+                showMessage('User not found', 'error', 'users-message');
+                return;
+            }
+ 
+            // Prevent banning owner
+            if (account.role === 'owner') {
+                showMessage('Cannot ban the Owner.', 'error', 'users-message');
+                closeBanModal();
+                return;
+            }
+ 
+            let expiry;
+            if (banType === 'permanent') {
+                expiry = new Date('2099-12-31').toISOString();
+            } else {
+                const days = banType === '1hour' ? 1 / 24 : banType === '1day' ? 1 : banType === '7days' ? 7 : customDays;
+                expiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+            }
+ 
+            account.banStatus = {
+                bannedAt: new Date().toISOString(),
+                expiry,
+                duration: banType === 'permanent' ? 'permanent' : `${banType}`,
+                reason,
+                bannedBy: JSON.parse(sessionStorage.getItem('currentUser')).username
+            };
+ 
+            localStorage.setItem('accounts', JSON.stringify(accounts));
+            closeBanModal();
+            loadUsers();
+            showMessage(`User "${username}" has been banned.`, 'success', 'users-message');
+        }
+ 
+        function unbanUser(username) {
+            const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+            const account = accounts.find(a => a.username.toLowerCase() === username.toLowerCase());
+ 
+            if (account) {
+                account.banStatus = null;
+                localStorage.setItem('accounts', JSON.stringify(accounts));
+                loadUsers();
+                showMessage(`User "${username}" has been unbanned.`, 'success', 'users-message');
+            }
+        }
+ 
+        // --- Announcements with permission checks ---
+        function postAnnouncement() {
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+            if (!currentUser || !roleHasPermission(currentUser.role, 'announce')) {
+                showMessage('You do not have permission to post announcements.', 'error', 'announcements-message');
+                return;
+            }
+ 
+            const title = document.getElementById('announcement-title').value.trim();
+            const text = document.getElementById('announcement-text').value.trim();
+            const duration = parseInt(document.getElementById('announcement-duration').value) || 5;
+ 
+            if (!title || !text) {
+                showMessage('Please fill in all fields', 'error', 'announcements-message');
+                return;
+            }
+ 
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            announcements.unshift({
+                id: Date.now(),
+                title: escapeHtml(title),
+                text: escapeHtml(text),
+                duration,
+                postedAt: new Date().toISOString(),
+                postedBy: currentUser.username
+            });
+ 
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+            document.getElementById('announcement-title').value = '';
+            document.getElementById('announcement-text').value = '';
+            document.getElementById('announcement-duration').value = '5';
+            loadAnnouncements();
+            showMessage('Announcement posted successfully!', 'success', 'announcements-message');
+        }
+ 
+        function loadAnnouncements() {
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            const list = document.getElementById('announcements-list');
+            list.innerHTML = '';
+ 
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+            const canDelete = currentUser && roleHasPermission(currentUser.role, 'deleteAnnouncement');
+ 
+            announcements.forEach(ann => {
+                const posted = new Date(ann.postedAt).toLocaleString();
+                const div = document.createElement('div');
+                div.style.cssText = 'background: #0f1724; border: 1px solid #2b6f86; border-radius: 6px; padding: 15px; margin-bottom: 10px;';
+                const deleteBtnHtml = canDelete ? `<button class="btn btn-ban" data-id="${ann.id}">Delete</button>` : '';
+                div.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                  <h4 style="margin: 0 0 8px 0; color: #6fbf3f;">${ann.title}</h4>
+                  <p style="margin: 0 0 8px 0; color: #dfe7ff; font-size: 13px;">${ann.text}</p>
+                  <small style="color: #999;">Posted by ${escapeHtml(ann.postedBy)} on ${posted}</small>
+                </div>
+                ${deleteBtnHtml}
+              </div>
+            `;
+                list.appendChild(div);
+ 
+                if (canDelete) {
+                    const btn = div.querySelector('button[data-id]');
+                    btn.addEventListener('click', () => deleteAnnouncement(ann.id));
+                }
+            });
+        }
+ 
+        function deleteAnnouncement(id) {
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+            if (!currentUser || !roleHasPermission(currentUser.role, 'deleteAnnouncement')) {
+                showMessage('You do not have permission to delete announcements.', 'error', 'announcements-message');
+                return;
+            }
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            const filtered = announcements.filter(a => a.id !== id);
+            localStorage.setItem('announcements', JSON.stringify(filtered));
+            loadAnnouncements();
+            showMessage('Announcement deleted.', 'success', 'announcements-message');
+        }
+ 
+        // --- Roles UI functions ---
+        function createRole() {
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+            if (!currentUser || !roleHasPermission(currentUser.role, 'manageRoles')) {
+                showMessage('You do not have permission to create roles.', 'error', 'roles-message');
+                return;
+            }
+ 
+            const name = document.getElementById('role-name').value.trim();
+            if (!name) {
+                showMessage('Role name required.', 'error', 'roles-message');
+                return;
+            }
+ 
+            const permissions = {
+                ban: document.getElementById('perm-ban').checked,
+                announce: document.getElementById('perm-announce').checked,
+                deleteAnnouncement: document.getElementById('perm-delete-ann').checked,
+                manageRoles: document.getElementById('perm-manage-roles').checked,
+                accessAdmin: document.getElementById('perm-ban').checked || document.getElementById('perm-announce').checked || document.getElementById('perm-manage-roles').checked, // simple heuristic
+                assignRoles: document.getElementById('perm-manage-roles').checked
+            };
+ 
+            const key = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+            const roles = loadOrInitRoles();
+ 
+            if (roles.some(r => r.key === key)) {
+                showMessage('A role with that key already exists. Change name.', 'error', 'roles-message');
+                return;
+            }
+ 
+            const newRole = { key, name, protected: false, permissions };
+            roles.push(newRole);
+            saveRoles(roles);
+            document.getElementById('role-name').value = '';
+            document.getElementById('perm-ban').checked = false;
+            document.getElementById('perm-announce').checked = false;
+            document.getElementById('perm-delete-ann').checked = false;
+            document.getElementById('perm-manage-roles').checked = false;
+            renderRoles();
+            showMessage(`Role "${name}" created.`, 'success', 'roles-message');
+        }
+ 
+        function renderRoles() {
+            const roles = loadOrInitRoles();
+            const tbody = document.getElementById('roles-tbody');
+            tbody.innerHTML = '';
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+            const canManageRoles = currentUser && roleHasPermission(currentUser.role, 'manageRoles');
+ 
+            roles.forEach(r => {
+                const tr = document.createElement('tr');
+ 
+                const tdKey = document.createElement('td'); tdKey.textContent = r.key; tr.appendChild(tdKey);
+                const tdName = document.createElement('td'); tdName.textContent = r.name + (r.protected ? ' (protected)' : ''); tr.appendChild(tdName);
+                const tdPerms = document.createElement('td'); tdPerms.innerHTML = Object.keys(r.permissions).filter(p => r.permissions[p]).map(p => `<span class="small-muted">${p}</span>`).join(' — '); tr.appendChild(tdPerms);
+ 
+                const tdActions = document.createElement('td');
+                if (r.protected) {
+                    tdActions.innerHTML = '<em style="color: #999;">Protected</em>';
+                } else if (canManageRoles) {
+                    const del = document.createElement('button');
+                    del.className = 'btn btn-ban';
+                    del.textContent = 'Delete';
+                    del.addEventListener('click', () => {
+                        if (!confirm(`Delete role "${r.name}"? This will not change existing users with that role.`)) return;
+                        const rolesArr = loadOrInitRoles().filter(rr => rr.key !== r.key);
+                        saveRoles(rolesArr);
+                        renderRoles();
+                        showMessage(`Role "${r.name}" deleted.`, 'success', 'roles-message');
+                    });
+                    tdActions.appendChild(del);
+                } else {
+                    tdActions.innerHTML = '<em style="color: #999;">No actions</em>';
+                }
+ 
+                tr.appendChild(tdActions);
+                tbody.appendChild(tr);
+            });
+        }
+ 
+        // --- Utilities ---
+        function showMessage(text, type, elementId) {
+            const el = document.getElementById(elementId);
+            el.textContent = text;
+            el.className = `message ${type}`;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 4000);
+        }
+ 
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+ 
+        function escapeAttr(text) {
+            return text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+ 
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            sessionStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        });
+    </script>
 </body>
 </html>
