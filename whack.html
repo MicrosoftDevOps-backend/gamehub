@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Whack-a-Mole</title>
+  <style>
+    html, body { height: 100%; margin: 0; background: #0b1220; font-family: system-ui, Arial; color: #dfe7ff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    #container { padding: 20px; }
+    h1 { text-align: center; color: #6fbf3f; margin: 0 0 20px 0; }
+    #stats { display: flex; gap: 30px; justify-content: center; margin-bottom: 20px; text-align: center; }
+    #stats div { background: #071029; padding: 15px 25px; border-radius: 8px; border: 1px solid #2b6f86; }
+    #stats div span { display: block; font-size: 24px; font-weight: bold; color: #6fbf3f; }
+    #stats div p { margin: 5px 0 0 0; font-size: 12px; color: #999; }
+    #gameArea { display: grid; grid-template-columns: repeat(3, 100px); gap: 15px; margin-bottom: 20px; }
+    .hole { width: 100px; height: 100px; background: #2b6f86; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 3px solid #6fbf3f; }
+    .mole { width: 100px; height: 100px; position: absolute; font-size: 60px; animation: popUp 0.3s ease-out; }
+    @keyframes popUp { from { transform: translateY(100px); } to { transform: translateY(0); } }
+    .mole:hover { transform: scale(1.1); }
+    .hit { animation: hitAnim 0.3s ease-out; }
+    @keyframes hitAnim { from { transform: scale(1.1); } to { transform: scale(0.9) translateY(50px); opacity: 0; } }
+    #timeBar { width: 300px; height: 8px; background: #0f1724; border-radius: 4px; margin-bottom: 20px; }
+    #timeBarFill { height: 100%; background: #6fbf3f; border-radius: 4px; width: 100%; transition: background 0.3s; }
+    #controls { text-align: center; }
+    button { padding: 12px 24px; background: #6fbf3f; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px; margin: 0 10px; }
+    button:hover { background: #7fcf4f; }
+    button:disabled { background: #4a8a2f; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>🔨 Whack-a-Mole</h1>
+    <div id="stats">
+      <div>
+        <span id="score">0</span>
+        <p>Score</p>
+      </div>
+      <div>
+        <span id="time">30</span>
+        <p>Time Left</p>
+      </div>
+      <div>
+        <span id="combo">0</span>
+        <p>Combo</p>
+      </div>
+    </div>
+    <div id="timeBar"><div id="timeBarFill"></div></div>
+    <div id="gameArea">
+      <div class="hole" onclick="hitMole(0)"><div class="mole" id="mole-0">🦡</div></div>
+      <div class="hole" onclick="hitMole(1)"><div class="mole" id="mole-1">🦡</div></div>
+      <div class="hole" onclick="hitMole(2)"><div class="mole" id="mole-2">🦡</div></div>
+      <div class="hole" onclick="hitMole(3)"><div class="mole" id="mole-3">🦡</div></div>
+      <div class="hole" onclick="hitMole(4)"><div class="mole" id="mole-4">🦡</div></div>
+      <div class="hole" onclick="hitMole(5)"><div class="mole" id="mole-5">🦡</div></div>
+      <div class="hole" onclick="hitMole(6)"><div class="mole" id="mole-6">🦡</div></div>
+      <div class="hole" onclick="hitMole(7)"><div class="mole" id="mole-7">🦡</div></div>
+      <div class="hole" onclick="hitMole(8)"><div class="mole" id="mole-8">🦡</div></div>
+    </div>
+    <div id="controls">
+      <button id="startBtn" onclick="startGame()">Start Game</button>
+      <button id="backBtn" onclick="location.href='index.html'">Back to Hub</button>
+    </div>
+  </div>
+
+  <script>
+    let score = 0, combo = 0, timeLeft = 30, gameRunning = false, activeMole = -1;
+    const totalTime = 30;
+
+    function startGame() {
+      score = 0;
+      combo = 0;
+      timeLeft = 30;
+      gameRunning = true;
+      activeMole = -1;
+      document.getElementById('score').textContent = '0';
+      document.getElementById('combo').textContent = '0';
+      document.getElementById('startBtn').disabled = true;
+      document.querySelectorAll('.mole').forEach(m => m.style.display = 'none');
+      
+      // Hide all moles initially
+      for (let i = 0; i < 9; i++) {
+        document.getElementById(`mole-${i}`).style.display = 'none';
+      }
+
+      const timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('time').textContent = timeLeft;
+        const percent = (timeLeft / totalTime) * 100;
+        const fill = document.getElementById('timeBarFill');
+        fill.style.width = percent + '%';
+        if (percent < 30) fill.style.background = '#ff6b6b';
+        else if (percent < 60) fill.style.background = '#ffa500';
+        else fill.style.background = '#6fbf3f';
+
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          endGame();
+        }
+      }, 1000);
+
+      popMole();
+    }
+
+    function popMole() {
+      if (!gameRunning) return;
+
+      // Hide previous mole
+      if (activeMole !== -1) {
+        document.getElementById(`mole-${activeMole}`).style.display = 'none';
+      }
+
+      // Show random mole
+      activeMole = Math.floor(Math.random() * 9);
+      document.getElementById(`mole-${activeMole}`).style.display = 'block';
+      document.getElementById(`mole-${activeMole}`).style.animation = 'none';
+      setTimeout(() => {
+        document.getElementById(`mole-${activeMole}`).style.animation = 'popUp 0.3s ease-out';
+      }, 10);
+
+      // Schedule next mole (0.8-1.5 seconds)
+      setTimeout(popMole, 800 + Math.random() * 700);
+    }
+
+    function hitMole(index) {
+      if (!gameRunning || index !== activeMole) {
+        combo = 0;
+        document.getElementById('combo').textContent = '0';
+        return;
+      }
+
+      combo++;
+      const points = 10 * combo;
+      score += points;
+      document.getElementById('score').textContent = score;
+      document.getElementById('combo').textContent = combo;
+
+      const mole = document.getElementById(`mole-${index}`);
+      mole.classList.add('hit');
+      mole.style.display = 'none';
+      setTimeout(() => {
+        mole.classList.remove('hit');
+      }, 300);
+
+      activeMole = -1;
+    }
+
+    function endGame() {
+      gameRunning = false;
+      document.querySelectorAll('.mole').forEach(m => m.style.display = 'none');
+      document.getElementById('startBtn').disabled = false;
+      alert(`Game Over!\n\nFinal Score: ${score}\nBest Combo: ${combo}`);
+    }
+  </script>
+</body>
+</html>
